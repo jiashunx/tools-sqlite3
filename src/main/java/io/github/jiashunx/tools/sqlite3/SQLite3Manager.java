@@ -47,20 +47,25 @@ public class SQLite3Manager {
         }
         try {
             String dbFilePath = new File(fileName).getAbsolutePath().replace("\\", "/");
-            if (POOL_MAP.containsKey(dbFilePath)) {
-                return POOL_MAP.get(dbFilePath);
-            }
             String $url = "jdbc:sqlite:" + dbFilePath;
             String $username = String.valueOf(username);
             String $password = String.valueOf(password);
-            if (logger.isInfoEnabled()) {
-                logger.info("create sqlite connection, url: {}, username: {}, password: {}", $url, $username, $password);
+            SQLite3ConnectionPool pool = POOL_MAP.get(dbFilePath);
+            if (pool != null) {
+                if (poolSize > pool.poolSize()) {
+                    pringLog($url, $username, $password);
+                    for (int i = 0, size = poolSize - pool.poolSize(); i < size; i++) {
+                        pool.addConnection(new SQLite3Connection(DriverManager.getConnection($url, $username, $password)));
+                    }
+                }
+                return pool;
             }
+            pringLog($url, $username, $password);
             List<SQLite3Connection> connectionList = new ArrayList<>(poolSize);
             for (int i = 0 ; i < poolSize; i++) {
                 connectionList.add(new SQLite3Connection(DriverManager.getConnection($url, $username, $password)));
             }
-            SQLite3ConnectionPool pool = new SQLite3ConnectionPool(connectionList.toArray(new SQLite3Connection[0]));
+            pool = new SQLite3ConnectionPool(connectionList.toArray(new SQLite3Connection[0]));
             POOL_MAP.put(dbFilePath, pool);
             return pool;
         } catch (Throwable throwable) {
@@ -69,6 +74,12 @@ public class SQLite3Manager {
             }
         }
         return null;
+    }
+
+    private static void pringLog(String $url, String $username, String $password) {
+        if (logger.isInfoEnabled()) {
+            logger.info("create sqlite connection, url: {}, username: {}, password: {}", $url, $username, $password);
+        }
     }
 
 }

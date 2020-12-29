@@ -16,6 +16,8 @@ public class SQLite3ConnectionPool {
 
     private final LinkedList<SQLite3Connection> pool;
 
+    private int poolSize;
+
     /**
      * 数据库连接读写锁.
      */
@@ -34,13 +36,33 @@ public class SQLite3ConnectionPool {
             }
             pool.addLast($connection);
         }
+        if (pool.isEmpty()) {
+            throw new IllegalArgumentException("connection pool do not have sqlite connections.");
+        }
+        poolSize = pool.size();
+    }
+
+    public synchronized void addConnection(SQLite3Connection connection) {
+        if (connection != null) {
+            synchronized (connection) {
+                if (connection.getPool() != null) {
+                    throw new IllegalArgumentException("connection has already assign connection pool.");
+                }
+                connection.setPool(this);
+            }
+            synchronized (pool) {
+                pool.addLast(connection);
+                pool.notifyAll();
+            }
+            poolSize++;
+        }
     }
 
     public void release(SQLite3Connection connection) {
         if (connection != null) {
             synchronized (pool) {
                 // 连接释放后通知消费者连接池已归还连接
-                pool.add(connection);
+                pool.addLast(connection);
                 pool.notifyAll();
             }
         }
@@ -78,6 +100,10 @@ public class SQLite3ConnectionPool {
                 return connection;
             }
         }
+    }
+
+    public synchronized int poolSize() {
+        return poolSize;
     }
 
     public ReentrantReadWriteLock getActionLock() {
