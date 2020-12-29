@@ -16,6 +16,17 @@
             <artifactId>sqlite-jdbc</artifactId>
             <version>3.18.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.25</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <parent>
         <groupId>org.sonatype.oss</groupId>
