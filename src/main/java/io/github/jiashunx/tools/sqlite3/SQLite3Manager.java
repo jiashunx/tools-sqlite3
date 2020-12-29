@@ -35,6 +35,10 @@ public class SQLite3Manager {
         return getConnectionPool(fileName, poolSize, DEFAULT_USERNAME, DEFAULT_PASSWORD);
     }
 
+    public static SQLite3ConnectionPool getConnectionPool(String fileName, String username, String password) {
+        return getConnectionPool(fileName, DEFAULT_POOL_SIZE, username, password);
+    }
+
     public synchronized static SQLite3ConnectionPool getConnectionPool(String fileName, int poolSize
             , String username, String password) {
         if (fileName == null || fileName.trim().isEmpty()) {

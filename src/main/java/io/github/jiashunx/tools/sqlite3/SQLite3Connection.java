@@ -23,4 +23,9 @@ public class SQLite3Connection {
     public synchronized void setPool(SQLite3ConnectionPool pool) {
         this.pool = Objects.requireNonNull(pool);
     }
+
+    public void release() {
+        getPool().release(this);
+    }
+
 }
