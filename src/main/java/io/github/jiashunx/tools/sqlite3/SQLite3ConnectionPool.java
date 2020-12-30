@@ -55,7 +55,7 @@ public class SQLite3ConnectionPool {
         poolStatus = ConnectionPoolStatus.RUNNING;
     }
 
-    public synchronized void addConnection(SQLite3Connection connection) {
+    public synchronized void addConnection(SQLite3Connection connection) throws PoolStatusChangedException {
         poolStatusCheck();
         if (connection != null) {
             synchronized (connection) {
@@ -84,7 +84,7 @@ public class SQLite3ConnectionPool {
         }
     }
 
-    public synchronized void close() throws InterruptedException {
+    public synchronized void close() throws InterruptedException, PoolStatusChangedException {
         poolStatusCheck();
         synchronized (pool) {
             poolStatus = ConnectionPoolStatus.CLOSING;
@@ -98,7 +98,7 @@ public class SQLite3ConnectionPool {
         }
     }
 
-    public SQLite3Connection fetch() {
+    public SQLite3Connection fetch() throws PoolStatusChangedException {
         try {
             return fetch(0);
         } catch (InterruptedException exception) {
@@ -109,7 +109,7 @@ public class SQLite3ConnectionPool {
         return null;
     }
 
-    public SQLite3Connection fetch(long timeoutMillis) throws InterruptedException {
+    public SQLite3Connection fetch(long timeoutMillis) throws InterruptedException, PoolStatusChangedException {
         synchronized (pool) {
             if (timeoutMillis <= 0) {
                 while (pool.isEmpty()) {
@@ -134,7 +134,7 @@ public class SQLite3ConnectionPool {
         }
     }
 
-    private void poolStatusCheck() {
+    private void poolStatusCheck() throws PoolStatusChangedException {
         if (poolStatus == ConnectionPoolStatus.CLOSING) {
             throw new PoolStatusChangedException(String.format("connection pool [%s] is closing.", getPoolName()));
         }

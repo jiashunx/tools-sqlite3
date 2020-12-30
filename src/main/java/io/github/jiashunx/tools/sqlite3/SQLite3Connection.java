@@ -37,21 +37,21 @@ public class SQLite3Connection {
         this.pool = Objects.requireNonNull(pool);
     }
 
-    public synchronized void release() {
-        checkIsClosed();
+    public synchronized void release() throws ConnectionStatusChangedException {
+        connectionStatusCheck();
         getPool().release(this);
     }
 
-    public synchronized void read(Consumer<Connection> consumer) {
-        checkIsClosed();
+    public synchronized void read(Consumer<Connection> consumer) throws ConnectionStatusChangedException {
+        connectionStatusCheck();
         read(c -> {
            consumer.accept(c);
            return DEFAULT_RETURN_VALUE;
         });
     }
 
-    public synchronized <R> R read(Function<Connection, R> function) {
-        checkIsClosed();
+    public synchronized <R> R read(Function<Connection, R> function) throws ConnectionStatusChangedException {
+        connectionStatusCheck();
         getPool().getActionReadLock().lock();
         try {
             return function.apply(this.connection);
@@ -60,16 +60,16 @@ public class SQLite3Connection {
         }
     }
 
-    public synchronized void write(Consumer<Connection> consumer) {
-        checkIsClosed();
+    public synchronized void write(Consumer<Connection> consumer) throws ConnectionStatusChangedException {
+        connectionStatusCheck();
         write(c -> {
             consumer.accept(c);
             return DEFAULT_RETURN_VALUE;
         });
     }
 
-    public synchronized <R> R write(Function<Connection, R> function) {
-        checkIsClosed();
+    public synchronized <R> R write(Function<Connection, R> function) throws ConnectionStatusChangedException {
+        connectionStatusCheck();
         getPool().getActionWriteLock().lock();
         try {
             return function.apply(connection);
@@ -78,8 +78,8 @@ public class SQLite3Connection {
         }
     }
 
-    synchronized void close() {
-        checkIsClosed();
+    synchronized void close() throws ConnectionStatusChangedException {
+        connectionStatusCheck();
         try {
             connection.close();
         } catch (Throwable throwable) {
@@ -91,7 +91,7 @@ public class SQLite3Connection {
         }
     }
 
-    private synchronized void checkIsClosed() {
+    private synchronized void connectionStatusCheck() throws ConnectionStatusChangedException {
         if (closed) {
             throw new ConnectionStatusChangedException("connection is closed.");
         }
