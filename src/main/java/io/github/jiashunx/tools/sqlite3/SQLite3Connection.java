@@ -1,6 +1,10 @@
 package io.github.jiashunx.tools.sqlite3;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -10,10 +14,13 @@ import java.util.function.Function;
  */
 public class SQLite3Connection {
 
+    private static final Logger logger = LoggerFactory.getLogger(SQLite3Connection.class);
+
     private static final byte[] DEFAULT_RETURN_VALUE = new byte[0];
 
     private volatile SQLite3ConnectionPool pool;
     private final Connection connection;
+    private volatile boolean closed;
 
     public SQLite3Connection(Connection connection) {
         this.connection = Objects.requireNonNull(connection);
@@ -61,6 +68,21 @@ public class SQLite3Connection {
             return function.apply(connection);
         } finally {
             getPool().getActionWriteLock().unlock();
+        }
+    }
+
+    synchronized void close() {
+        if (closed) {
+            return;
+        }
+        try {
+            connection.close();
+        } catch (Throwable throwable) {
+            if (logger.isErrorEnabled()) {
+                logger.error("sqlite connection close failed.", throwable);
+            }
+        } finally {
+            closed = true;
         }
     }
 

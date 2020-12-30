@@ -10,7 +10,7 @@ import static org.junit.Assert.*;
 public class SQLite3Test {
 
     @Test
-    public void test() {
+    public void test() throws InterruptedException {
         SQLite3JdbcTemplate jdbcTemplate = new SQLite3JdbcTemplate("test-sqlite.db");
         SQLite3JdbcTemplate jdbcTemplate1 = new SQLite3JdbcTemplate(SQLite3Manager.getConnectionPool("test-sqlite.db", 20));
         assertEquals(jdbcTemplate.getConnectionPool(), jdbcTemplate1.getConnectionPool());
@@ -23,6 +23,7 @@ public class SQLite3Test {
         }
         tableExists = jdbcTemplate.isTableExists("TEST_LEE");
         System.out.println("table TEST_LEE exists ? " + tableExists);
+        jdbcTemplate.getConnectionPool().close();
     }
 
 }

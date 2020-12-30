@@ -1,5 +1,7 @@
 package io.github.jiashunx.tools.sqlite3;
 
+import io.github.jiashunx.tools.sqlite3.exception.SQLite3ConnectionPoolStatusChangedException;
+import io.github.jiashunx.tools.sqlite3.model.SQLite3ConnectionPoolStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +25,8 @@ public class SQLite3ConnectionPool {
      */
     private final ReentrantReadWriteLock actionLock = new ReentrantReadWriteLock();
 
+    private volatile SQLite3ConnectionPoolStatus poolStatus;
+
     public SQLite3ConnectionPool(SQLite3Connection[] connections) {
         SQLite3Connection[] arr = Objects.requireNonNull(connections);
         pool = new LinkedList<>();
@@ -40,9 +44,11 @@ public class SQLite3ConnectionPool {
             throw new IllegalArgumentException("connection pool do not have sqlite connections.");
         }
         poolSize = pool.size();
+        poolStatus = SQLite3ConnectionPoolStatus.RUNNING;
     }
 
     public synchronized void addConnection(SQLite3Connection connection) {
+        poolStatusCheck();
         if (connection != null) {
             synchronized (connection) {
                 if (connection.getPool() != null) {
@@ -68,6 +74,20 @@ public class SQLite3ConnectionPool {
         }
     }
 
+    public synchronized void close() throws InterruptedException {
+        poolStatusCheck();
+        synchronized (pool) {
+            poolStatus = SQLite3ConnectionPoolStatus.CLOSING;
+            while (pool.size() != poolSize) {
+                pool.wait();
+            }
+            for (SQLite3Connection connection: pool) {
+                connection.close();
+            }
+            poolStatus = SQLite3ConnectionPoolStatus.SHUTDOWN;
+        }
+    }
+
     public SQLite3Connection fetch() {
         try {
             return fetch(0);
@@ -85,6 +105,7 @@ public class SQLite3ConnectionPool {
                 while (pool.isEmpty()) {
                     pool.wait();
                 }
+                poolStatusCheck();
                 return pool.removeFirst();
             } else {
                 long future = System.currentTimeMillis() + timeoutMillis;
@@ -93,12 +114,22 @@ public class SQLite3ConnectionPool {
                     pool.wait(remaining);
                     remaining = future - System.currentTimeMillis();
                 }
+                poolStatusCheck();
                 SQLite3Connection connection = null;
                 if (!pool.isEmpty()) {
                     connection = pool.removeFirst();
                 }
                 return connection;
             }
+        }
+    }
+
+    private void poolStatusCheck() {
+        if (poolStatus == SQLite3ConnectionPoolStatus.CLOSING) {
+            throw new SQLite3ConnectionPoolStatusChangedException("connection pool is closing.");
+        }
+        if (poolStatus == SQLite3ConnectionPoolStatus.SHUTDOWN) {
+            throw new SQLite3ConnectionPoolStatusChangedException("connection pool is closed.");
         }
     }
 
