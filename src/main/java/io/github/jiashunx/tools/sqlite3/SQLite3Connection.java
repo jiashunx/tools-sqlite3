@@ -80,7 +80,7 @@ public class SQLite3Connection {
             connection.close();
         } catch (Throwable throwable) {
             if (logger.isErrorEnabled()) {
-                logger.error("sqlite connection close failed.", throwable);
+                logger.error("connection [{}] close failed.", getName(), throwable);
             }
         } finally {
             closed = true;
