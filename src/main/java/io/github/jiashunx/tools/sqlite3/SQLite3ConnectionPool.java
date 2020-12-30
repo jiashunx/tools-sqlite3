@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -27,21 +28,28 @@ public class SQLite3ConnectionPool {
 
     private volatile ConnectionPoolStatus poolStatus;
 
+    private final String poolName;
+
+    private static AtomicInteger counter = new AtomicInteger(0);
+
     public SQLite3ConnectionPool(SQLite3Connection[] connections) {
         SQLite3Connection[] arr = Objects.requireNonNull(connections);
         pool = new LinkedList<>();
-        for (SQLite3Connection connection: arr) {
-            SQLite3Connection $connection = Objects.requireNonNull(connection);
+        poolName = "sqlite-pool-" + counter.incrementAndGet();
+        for (int i = 0; i < arr.length; i++) {
+            SQLite3Connection $connection = Objects.requireNonNull(arr[i]);
             synchronized ($connection) {
                 if ($connection.getPool() != null) {
-                    throw new IllegalArgumentException("connection has already assign connection pool.");
+                    throw new IllegalArgumentException(String.format("connection [%s] has already assign to connection pool [%s]"
+                            , $connection.getName(), $connection.getPool().getPoolName()));
                 }
                 $connection.setPool(this);
+                $connection.setName(poolName + "-connection-" + (i + 1));
             }
             pool.addLast($connection);
         }
         if (pool.isEmpty()) {
-            throw new IllegalArgumentException("connection pool do not have sqlite connections.");
+            throw new IllegalArgumentException(String.format("connection pool [%s] has no connections.", poolName));
         }
         poolSize = pool.size();
         poolStatus = ConnectionPoolStatus.RUNNING;
@@ -52,9 +60,11 @@ public class SQLite3ConnectionPool {
         if (connection != null) {
             synchronized (connection) {
                 if (connection.getPool() != null) {
-                    throw new IllegalArgumentException("connection has already assign connection pool.");
+                    throw new IllegalArgumentException(String.format("connection [%s] has already assign to connection pool [%s]"
+                            , connection.getName(), connection.getPool().getPoolName()));
                 }
                 connection.setPool(this);
+                connection.setName(getPoolName() + "-connection-" + (poolSize + 1));
             }
             synchronized (pool) {
                 pool.addLast(connection);
@@ -93,7 +103,7 @@ public class SQLite3ConnectionPool {
             return fetch(0);
         } catch (InterruptedException exception) {
             if (logger.isErrorEnabled()) {
-                logger.error("fetch sqlite connection failed", exception);
+                logger.error("fetch connection from pool [{}] failed", getPoolName(), exception);
             }
         }
         return null;
@@ -126,10 +136,10 @@ public class SQLite3ConnectionPool {
 
     private void poolStatusCheck() {
         if (poolStatus == ConnectionPoolStatus.CLOSING) {
-            throw new PoolStatusChangedException("connection pool is closing.");
+            throw new PoolStatusChangedException(String.format("connection pool [%s] is closing.", getPoolName()));
         }
         if (poolStatus == ConnectionPoolStatus.SHUTDOWN) {
-            throw new PoolStatusChangedException("connection pool is closed.");
+            throw new PoolStatusChangedException(String.format("connection pool [%s] is closed.", getPoolName()));
         }
     }
 
@@ -147,6 +157,10 @@ public class SQLite3ConnectionPool {
 
     public ReentrantReadWriteLock.WriteLock getActionWriteLock() {
         return getActionLock().writeLock();
+    }
+
+    public String getPoolName() {
+        return poolName;
     }
 
 }

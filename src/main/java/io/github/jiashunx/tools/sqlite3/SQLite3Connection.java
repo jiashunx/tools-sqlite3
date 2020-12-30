@@ -21,6 +21,7 @@ public class SQLite3Connection {
     private volatile SQLite3ConnectionPool pool;
     private final Connection connection;
     private volatile boolean closed;
+    private String name;
 
     public SQLite3Connection(Connection connection) {
         this.connection = Objects.requireNonNull(connection);
@@ -84,6 +85,14 @@ public class SQLite3Connection {
         } finally {
             closed = true;
         }
+    }
+
+    void setName(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
     }
 
 }
