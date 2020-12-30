@@ -1,5 +1,6 @@
 package io.github.jiashunx.tools.sqlite3;
 
+import io.github.jiashunx.tools.sqlite3.exception.ConnectionStatusChangedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,10 +38,12 @@ public class SQLite3Connection {
     }
 
     public synchronized void release() {
+        checkIsClosed();
         getPool().release(this);
     }
 
     public synchronized void read(Consumer<Connection> consumer) {
+        checkIsClosed();
         read(c -> {
            consumer.accept(c);
            return DEFAULT_RETURN_VALUE;
@@ -48,6 +51,7 @@ public class SQLite3Connection {
     }
 
     public synchronized <R> R read(Function<Connection, R> function) {
+        checkIsClosed();
         getPool().getActionReadLock().lock();
         try {
             return function.apply(this.connection);
@@ -57,6 +61,7 @@ public class SQLite3Connection {
     }
 
     public synchronized void write(Consumer<Connection> consumer) {
+        checkIsClosed();
         write(c -> {
             consumer.accept(c);
             return DEFAULT_RETURN_VALUE;
@@ -64,6 +69,7 @@ public class SQLite3Connection {
     }
 
     public synchronized <R> R write(Function<Connection, R> function) {
+        checkIsClosed();
         getPool().getActionWriteLock().lock();
         try {
             return function.apply(connection);
@@ -73,9 +79,7 @@ public class SQLite3Connection {
     }
 
     synchronized void close() {
-        if (closed) {
-            return;
-        }
+        checkIsClosed();
         try {
             connection.close();
         } catch (Throwable throwable) {
@@ -84,6 +88,12 @@ public class SQLite3Connection {
             }
         } finally {
             closed = true;
+        }
+    }
+
+    private synchronized void checkIsClosed() {
+        if (closed) {
+            throw new ConnectionStatusChangedException("connection is closed.");
         }
     }
 
