@@ -68,7 +68,7 @@ public class SQLite3ConnectionPool {
         }
     }
 
-    public SQLite3Connection fetch() throws InterruptedException {
+    public SQLite3Connection fetch() {
         try {
             return fetch(0);
         } catch (InterruptedException exception) {

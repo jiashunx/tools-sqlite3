@@ -2,11 +2,15 @@ package io.github.jiashunx.tools.sqlite3;
 
 import java.sql.Connection;
 import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * @author jiashunx
  */
 public class SQLite3Connection {
+
+    private static final byte[] DEFAULT_RETURN_VALUE = new byte[0];
 
     private volatile SQLite3ConnectionPool pool;
     private final Connection connection;
@@ -24,8 +28,40 @@ public class SQLite3Connection {
         this.pool = Objects.requireNonNull(pool);
     }
 
-    public void release() {
+    public synchronized void release() {
         getPool().release(this);
+    }
+
+    public synchronized void read(Consumer<Connection> consumer) {
+        read(c -> {
+           consumer.accept(c);
+           return DEFAULT_RETURN_VALUE;
+        });
+    }
+
+    public synchronized <R> R read(Function<Connection, R> function) {
+        getPool().getActionReadLock().lock();
+        try {
+            return function.apply(this.connection);
+        } finally {
+            getPool().getActionReadLock().unlock();;
+        }
+    }
+
+    public synchronized void write(Consumer<Connection> consumer) {
+        write(c -> {
+            consumer.accept(c);
+            return DEFAULT_RETURN_VALUE;
+        });
+    }
+
+    public synchronized <R> R write(Function<Connection, R> function) {
+        getPool().getActionWriteLock().lock();
+        try {
+            return function.apply(connection);
+        } finally {
+            getPool().getActionWriteLock().unlock();
+        }
     }
 
 }
