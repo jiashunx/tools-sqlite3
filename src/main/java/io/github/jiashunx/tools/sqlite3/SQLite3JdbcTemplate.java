@@ -1,5 +1,6 @@
 package io.github.jiashunx.tools.sqlite3;
 
+import io.github.jiashunx.tools.sqlite3.exception.DataAccessException;
 import io.github.jiashunx.tools.sqlite3.model.ResultColumn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,7 +99,7 @@ public class SQLite3JdbcTemplate {
                 return statement.executeUpdate(sql);
             } catch (Throwable throwable) {
                 if (logger.isErrorEnabled()) {
-                    logger.error("sql update failed: {}", sql, throwable);
+                    logger.error("execute update failed, sql: {}", sql, throwable);
                 }
             } finally {
                 close(resultSet);
@@ -108,20 +109,65 @@ public class SQLite3JdbcTemplate {
         });
     }
 
-    public Map<String, Object> queryForMap(String sql) {
+    public boolean isTableExists(String tableName) {
+        try {
+            return queryForInt(String.format("SELECT COUNT(1) COUNT FROM %s LIMIT 1", tableName)) >= 0;
+        } catch (DataAccessException exception) {
+            if (logger.isErrorEnabled()) {
+                logger.error(String.format("query table [%s] existence failed.", tableName), exception);
+            }
+        }
+        return false;
+    }
+
+    public boolean queryForBoolean(String sql) throws DataAccessException {
+        return Boolean.parseBoolean(queryForOneValue(sql).toString());
+    }
+
+    public byte queryForByte(String sql) throws DataAccessException {
+        return Byte.parseByte(queryForOneValue(sql).toString());
+    }
+
+    public short queryForShort(String sql) throws DataAccessException {
+        return Short.parseShort(queryForOneValue(sql).toString());
+    }
+
+    public int queryForInt(String sql) throws DataAccessException {
+        return Integer.parseInt(queryForOneValue(sql).toString());
+    }
+
+    public float queryForFloat(String sql) throws DataAccessException {
+        return Float.parseFloat(queryForOneValue(sql).toString());
+    }
+
+    public double queryForDouble(String sql) throws DataAccessException {
+        return Double.parseDouble(queryForOneValue(sql).toString());
+    }
+
+    private Object queryForOneValue(String sql) throws DataAccessException {
+        Map<String, Object> resultMap = queryForMap(sql);
+        if (resultMap == null || resultMap.isEmpty()) {
+            throw new DataAccessException("query result is null");
+        }
+        if (resultMap.size() > 1) {
+            throw new DataAccessException("query result contains more than one column");
+        }
+        return resultMap.get(resultMap.keySet().toArray(new String[0])[0]);
+    }
+
+    public Map<String, Object> queryForMap(String sql) throws DataAccessException {
         List<Map<String, Object>> mapList = queryForList(sql);
         Map<String, Object> retMap = null;
         if (mapList != null && !mapList.isEmpty()) {
             if (mapList.size() == 1) {
                 return mapList.get(0);
             }
-            // TODO 自定义相关异常
-            throw new RuntimeException("more than one row returned.");
+            throw new DataAccessException("query result contains more than one row");
         }
         return retMap;
     }
 
-    public List<Map<String, Object>> queryForList(String sql) {
+    public List<Map<String, Object>> queryForList(String sql) throws DataAccessException {
         return query(connection -> {
             List<Map<String, Object>> retMapList = null;
             Statement statement = null;
@@ -130,22 +176,14 @@ public class SQLite3JdbcTemplate {
                 statement = connection.createStatement();
                 resultSet = statement.executeQuery(sql);
                 retMapList = getResultMapList(resultSet);
-            } catch (Throwable throwable) {
-                if (logger.isErrorEnabled()) {
-                    logger.error("sql query failed: {}", sql, throwable);
-                }
+            } catch (SQLException exception) {
+                throw new DataAccessException(String.format("execute query failed, sql: %s", sql), exception);
             } finally {
                 close(resultSet);
                 close(statement);
             }
             return retMapList;
         });
-    }
-
-    public boolean isTableExists(String tableName) {
-        // TODO 后续调整为预编译
-        Map<String, Object> resultMap = queryForMap(String.format("SELECT COUNT(1) COUNT FROM %s LIMIT 1", tableName));
-        return resultMap != null && resultMap.get("COUNT") != null && Integer.parseInt(resultMap.get("COUNT").toString()) >= 0;
     }
 
     public static List<Map<String, Object>> getResultMapList(ResultSet resultSet) throws SQLException {
@@ -257,9 +295,9 @@ public class SQLite3JdbcTemplate {
         }
         try {
             closeable.close();
-        } catch (Throwable throwable) {
+        } catch (Exception exception) {
             if (logger.isErrorEnabled()) {
-                logger.error("close AutoCloseable object failed.", throwable);
+                logger.error("close AutoCloseable object [{}] failed.", closeable.getClass(), exception);
             }
         }
     }
