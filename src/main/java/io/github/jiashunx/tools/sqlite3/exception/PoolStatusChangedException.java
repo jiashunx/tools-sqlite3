@@ -3,7 +3,7 @@ package io.github.jiashunx.tools.sqlite3.exception;
 /**
  * @author jiashunx
  */
-public class PoolStatusChangedException extends RuntimeException {
+public class PoolStatusChangedException extends SQLite3Exception {
     public PoolStatusChangedException() {
         super();
     }
