@@ -1,7 +1,7 @@
 package io.github.jiashunx.tools.sqlite3;
 
-import io.github.jiashunx.tools.sqlite3.exception.SQLite3ConnectionPoolStatusChangedException;
-import io.github.jiashunx.tools.sqlite3.model.SQLite3ConnectionPoolStatus;
+import io.github.jiashunx.tools.sqlite3.exception.PoolStatusChangedException;
+import io.github.jiashunx.tools.sqlite3.model.ConnectionPoolStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +25,7 @@ public class SQLite3ConnectionPool {
      */
     private final ReentrantReadWriteLock actionLock = new ReentrantReadWriteLock();
 
-    private volatile SQLite3ConnectionPoolStatus poolStatus;
+    private volatile ConnectionPoolStatus poolStatus;
 
     public SQLite3ConnectionPool(SQLite3Connection[] connections) {
         SQLite3Connection[] arr = Objects.requireNonNull(connections);
@@ -44,7 +44,7 @@ public class SQLite3ConnectionPool {
             throw new IllegalArgumentException("connection pool do not have sqlite connections.");
         }
         poolSize = pool.size();
-        poolStatus = SQLite3ConnectionPoolStatus.RUNNING;
+        poolStatus = ConnectionPoolStatus.RUNNING;
     }
 
     public synchronized void addConnection(SQLite3Connection connection) {
@@ -77,14 +77,14 @@ public class SQLite3ConnectionPool {
     public synchronized void close() throws InterruptedException {
         poolStatusCheck();
         synchronized (pool) {
-            poolStatus = SQLite3ConnectionPoolStatus.CLOSING;
+            poolStatus = ConnectionPoolStatus.CLOSING;
             while (pool.size() != poolSize) {
                 pool.wait();
             }
             for (SQLite3Connection connection: pool) {
                 connection.close();
             }
-            poolStatus = SQLite3ConnectionPoolStatus.SHUTDOWN;
+            poolStatus = ConnectionPoolStatus.SHUTDOWN;
         }
     }
 
@@ -125,11 +125,11 @@ public class SQLite3ConnectionPool {
     }
 
     private void poolStatusCheck() {
-        if (poolStatus == SQLite3ConnectionPoolStatus.CLOSING) {
-            throw new SQLite3ConnectionPoolStatusChangedException("connection pool is closing.");
+        if (poolStatus == ConnectionPoolStatus.CLOSING) {
+            throw new PoolStatusChangedException("connection pool is closing.");
         }
-        if (poolStatus == SQLite3ConnectionPoolStatus.SHUTDOWN) {
-            throw new SQLite3ConnectionPoolStatusChangedException("connection pool is closed.");
+        if (poolStatus == ConnectionPoolStatus.SHUTDOWN) {
+            throw new PoolStatusChangedException("connection pool is closed.");
         }
     }
 
