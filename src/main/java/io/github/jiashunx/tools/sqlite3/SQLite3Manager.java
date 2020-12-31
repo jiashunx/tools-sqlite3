@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,7 +22,7 @@ public class SQLite3Manager {
 
     public static final int DEFAULT_POOL_SIZE = 16;
     public static final int MAX_POOL_SIZE = 256;
-    public static final int MIN_POOL_SIZE = 1;
+    public static final int MIN_POOL_SIZE = 2;
     public static final String DEFAULT_USERNAME = "sqlite";
     public static final String DEFAULT_PASSWORD = "sqlite";
 
@@ -56,20 +57,21 @@ public class SQLite3Manager {
             String $password = String.valueOf(password);
             SQLite3ConnectionPool pool = POOL_MAP.get(dbFilePath);
             if (pool != null) {
-                if (poolSize > pool.poolSize()) {
+                if (poolSize > pool.getReadConnectionPoolSize()) {
                     pringLog($url, $username, $password);
-                    for (int i = 0, size = poolSize - pool.poolSize(); i < size; i++) {
-                        pool.addConnection(new SQLite3Connection(DriverManager.getConnection($url, $username, $password)));
+                    for (int i = 0, size = poolSize - pool.getReadConnectionPoolSize(); i < size; i++) {
+                        pool.addConnection(DriverManager.getConnection($url, $username, $password));
                     }
                 }
                 return pool;
             }
             pringLog($url, $username, $password);
-            List<SQLite3Connection> connectionList = new ArrayList<>(poolSize);
-            for (int i = 0 ; i < poolSize; i++) {
-                connectionList.add(new SQLite3Connection(DriverManager.getConnection($url, $username, $password)));
+            Connection writeConnection = DriverManager.getConnection($url, $username, $password);
+            Connection[] readConnectionArr = new Connection[poolSize - 1];
+            for (int i = 0 ; i < poolSize - 1; i++) {
+                readConnectionArr[i] = DriverManager.getConnection($url, $username, $password);;
             }
-            pool = new SQLite3ConnectionPool(connectionList.toArray(new SQLite3Connection[0]));
+            pool = new SQLite3ConnectionPool(writeConnection, readConnectionArr);
             POOL_MAP.put(dbFilePath, pool);
             return pool;
         } catch (Throwable throwable) {

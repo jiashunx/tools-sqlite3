@@ -43,7 +43,7 @@ public class SQLite3JdbcTemplate {
     /********************************************* ↓ 基础API ↓ *********************************************/
 
     public void query(Consumer<Connection> consumer) {
-        query(getConnectionPool().fetch(), consumer);
+        query(getConnectionPool().fetchReadConnection(), consumer);
     }
 
     public void query(SQLite3Connection connection, Consumer<Connection> consumer) {
@@ -57,7 +57,7 @@ public class SQLite3JdbcTemplate {
     }
 
     public <R> R query(Function<Connection, R> function) {
-        return query(getConnectionPool().fetch(), function);
+        return query(getConnectionPool().fetchReadConnection(), function);
     }
 
     public <R> R query(SQLite3Connection connection, Function<Connection, R> function) {
@@ -71,7 +71,7 @@ public class SQLite3JdbcTemplate {
     }
 
     public void write(Consumer<Connection> consumer) {
-        write(getConnectionPool().fetch(), consumer);
+        write(getConnectionPool().fetchWriteConnection(), consumer);
     }
 
     public void write(SQLite3Connection connection, Consumer<Connection> consumer) {
@@ -85,7 +85,7 @@ public class SQLite3JdbcTemplate {
     }
 
     public <R> R write(Function<Connection, R> function) {
-        return write(getConnectionPool().fetch(), function);
+        return write(getConnectionPool().fetchWriteConnection(), function);
     }
 
     public <R> R write(SQLite3Connection connection, Function<Connection, R> function) {
