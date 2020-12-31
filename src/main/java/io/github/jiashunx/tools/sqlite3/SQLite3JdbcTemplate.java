@@ -1,6 +1,7 @@
 package io.github.jiashunx.tools.sqlite3;
 
 import io.github.jiashunx.tools.sqlite3.exception.DataAccessException;
+import io.github.jiashunx.tools.sqlite3.model.QueryResult;
 import io.github.jiashunx.tools.sqlite3.model.ResultColumn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,7 +113,14 @@ public class SQLite3JdbcTemplate {
     }
 
     public boolean isTableExists(String tableName) throws DataAccessException {
-        return queryForInt(String.format("SELECT COUNT(1) FROM %s LIMIT 1", tableName)) >= 0;
+        try {
+            return queryForInt(String.format("SELECT COUNT(1) FROM %s LIMIT 1", tableName)) >= 0;
+        } catch (DataAccessException exception) {
+            if (logger.isErrorEnabled()) {
+                logger.error(String.format("query table [%s] existence failed.", tableName), exception);
+            }
+        }
+        return false;
     }
 
     public boolean queryForBoolean(String sql) throws DataAccessException {
@@ -217,26 +225,25 @@ public class SQLite3JdbcTemplate {
                     consumer.accept(statement);
                 }
                 resultSet = statement.executeQuery();
-                retMapList = getResultMapList(resultSet);
+                return getQueryResultObj(resultSet).getResultList();
             } catch (SQLException exception) {
                 throw new DataAccessException(String.format("execute query failed, sql: %s", sql), exception);
             } finally {
                 close(resultSet);
                 close(statement);
             }
-            return retMapList;
         });
     }
 
-    public static List<Map<String, Object>> getResultMapList(ResultSet resultSet) throws SQLException {
+    public static QueryResult getQueryResultObj(ResultSet resultSet) throws SQLException {
         if (resultSet == null) {
             return null;
         }
         List<Map<String, Object>> retMapList = new ArrayList<>();
-        Map<String, ResultColumn> resultColumnMap = getResultColumnMap(resultSet);
+        Map<String, ResultColumn> columnMap = getResultColumnMap(resultSet);
         while (resultSet.next()) {
             Map<String, Object> rowMap = new HashMap<>();
-            for (Map.Entry<String, ResultColumn> entry: resultColumnMap.entrySet()) {
+            for (Map.Entry<String, ResultColumn> entry: columnMap.entrySet()) {
                 String columnName = entry.getKey();
                 ResultColumn columnModel = entry.getValue();
                 String columnLabel = columnModel.getColumnLabel();
@@ -293,7 +300,7 @@ public class SQLite3JdbcTemplate {
             }
             retMapList.add(rowMap);
         }
-        return retMapList;
+        return  new QueryResult(columnMap, retMapList);
     }
 
     public static Map<String, ResultColumn> getResultColumnMap(ResultSet resultSet) throws SQLException {
