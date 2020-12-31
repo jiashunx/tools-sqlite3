@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -36,6 +37,10 @@ public class SQLite3JdbcTemplate {
     public SQLite3ConnectionPool getConnectionPool() {
         return connectionPool;
     }
+
+
+
+    /********************************************* ↓ 基础API ↓ *********************************************/
 
     public void query(Consumer<Connection> consumer) {
         query(getConnectionPool().fetch(), consumer);
@@ -93,7 +98,86 @@ public class SQLite3JdbcTemplate {
         });
     }
 
-    public int executeUpdate(String sql) {
+    /********************************************* ↑ 基础API ↑ *********************************************/
+
+
+
+    /********************************************* ↓ 通用API ↓ *********************************************/
+
+    public int[] batchUpdate(String[] sqlArr) throws DataAccessException {
+        return batchUpdate(sqlArr, (index, statement) -> {});
+    }
+
+    public int[] batchUpdate(String[] sqlArr, BiConsumer<Integer, PreparedStatement> consumer) throws DataAccessException {
+        return write(connection -> {
+            int[] effectedRowArr = new int[sqlArr.length];
+            PreparedStatement statement = null;
+            try {
+                connection.setAutoCommit(false);
+                for (int index = 0; index < sqlArr.length; index++) {
+                    String sql = sqlArr[index];
+                    try {
+                        statement = connection.prepareStatement(sql);
+                        if (consumer != null) {
+                            consumer.accept(index, statement);
+                        }
+                        effectedRowArr[index] = statement.executeUpdate();
+                    } catch (Throwable exception) {
+                        throw new DataAccessException(String.format("execute batch update failed, single sql: %s", sql), exception);
+                    } finally {
+                        close(statement);
+                        statement = null;
+                    }
+                }
+                connection.commit();
+                return effectedRowArr;
+            } catch (Throwable exception) {
+                try {
+                    connection.rollback();
+                } catch (SQLException exception1) {
+                    throw new DataAccessException(String.format(
+                            "execute batch update failed (rollback failed, reason: %s.)"
+                            , exception1.getMessage()), exception);
+                }
+                throw new DataAccessException("execute batch update failed(rollback success)", exception);
+            } finally {
+                close(statement);
+            }
+        });
+    }
+
+    public int batchInsert(String sql, int rowCount, BiConsumer<Integer, PreparedStatement> consumer) throws DataAccessException {
+        return write(connection -> {
+            int effectedRowCount = 0;
+            PreparedStatement statement = null;
+            try {
+                connection.setAutoCommit(false);
+                statement = connection.prepareStatement(sql);
+                for (int i = 0; i < rowCount; i++) {
+                    if (consumer != null) {
+                        consumer.accept(i, statement);
+                    }
+                    effectedRowCount += statement.executeUpdate();
+                    statement.clearParameters();
+                }
+                connection.commit();
+                return effectedRowCount;
+            } catch (Throwable exception) {
+                try {
+                    connection.rollback();
+                } catch (SQLException exception1) {
+                    throw new DataAccessException(String.format(
+                            "execute batch insert failed (rollback failed, reason: %s.), sql: %s"
+                            , exception1.getMessage(), sql), exception);
+                }
+                throw new DataAccessException(String.format("execute batch insert failed(rollback success), sql: %s", sql), exception);
+            } finally {
+                close(statement);
+            }
+        });
+    }
+
+    public int executeUpdate(String sql) throws DataAccessException {
         return executeUpdate(sql, PREPARED_STATEMENT_CONSUMER);
     }
 
@@ -109,7 +193,7 @@ public class SQLite3JdbcTemplate {
                 int rowCount = statement.executeUpdate();
                 connection.commit();
                 return rowCount;
-            } catch (SQLException exception) {
+            } catch (Throwable exception) {
                 try {
                     connection.rollback();
                 } catch (SQLException exception1) {
@@ -246,7 +330,7 @@ public class SQLite3JdbcTemplate {
                 }
                 resultSet = statement.executeQuery();
                 return parseQueryResultObj(resultSet);
-            } catch (SQLException exception) {
+            } catch (Throwable exception) {
                 throw new DataAccessException(String.format("execute query failed, sql: %s", sql), exception);
             } finally {
                 close(resultSet);
@@ -358,6 +442,14 @@ public class SQLite3JdbcTemplate {
         return retMap;
     }
 
+    public static void close(Statement statement) {
+        close((AutoCloseable) statement);
+    }
+
+    public static void close(ResultSet resultSet) {
+        close((AutoCloseable) resultSet);
+    }
+
     public static void close(AutoCloseable closeable) {
         if (closeable == null) {
             return;
@@ -370,5 +462,8 @@ public class SQLite3JdbcTemplate {
             }
         }
     }
+
+    /********************************************* ↑ 通用API ↑ *********************************************/
+
 
 }
