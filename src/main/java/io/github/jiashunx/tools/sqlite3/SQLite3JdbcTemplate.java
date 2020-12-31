@@ -17,6 +17,8 @@ public class SQLite3JdbcTemplate {
 
     private static final Logger logger = LoggerFactory.getLogger(SQLite3JdbcTemplate.class);
 
+    private static final Consumer<PreparedStatement> PREPARED_STATEMENT_CONSUMER = statement -> {};
+
     private SQLite3ConnectionPool connectionPool;
 
     public SQLite3JdbcTemplate(String fileName) {
@@ -109,43 +111,72 @@ public class SQLite3JdbcTemplate {
         });
     }
 
-    public boolean isTableExists(String tableName) {
-        try {
-            return queryForInt(String.format("SELECT COUNT(1) COUNT FROM %s LIMIT 1", tableName)) >= 0;
-        } catch (DataAccessException exception) {
-            if (logger.isErrorEnabled()) {
-                logger.error(String.format("query table [%s] existence failed.", tableName), exception);
-            }
-        }
-        return false;
+    public boolean isTableExists(String tableName) throws DataAccessException {
+        return queryForInt(String.format("SELECT COUNT(1) FROM %s LIMIT 1", tableName)) >= 0;
     }
 
     public boolean queryForBoolean(String sql) throws DataAccessException {
-        return Boolean.parseBoolean(queryForOneValue(sql).toString());
+        return queryForBoolean(sql, PREPARED_STATEMENT_CONSUMER);
+    }
+
+    public boolean queryForBoolean(String sql, Consumer<PreparedStatement> consumer) throws DataAccessException {
+        return Boolean.parseBoolean(queryForString(sql, consumer));
     }
 
     public byte queryForByte(String sql) throws DataAccessException {
-        return Byte.parseByte(queryForOneValue(sql).toString());
+        return queryForByte(sql, PREPARED_STATEMENT_CONSUMER);
+    }
+
+    public byte queryForByte(String sql, Consumer<PreparedStatement> consumer) throws DataAccessException {
+        return Byte.parseByte(queryForString(sql, consumer));
     }
 
     public short queryForShort(String sql) throws DataAccessException {
-        return Short.parseShort(queryForOneValue(sql).toString());
+        return queryForShort(sql, PREPARED_STATEMENT_CONSUMER);
+    }
+
+    public short queryForShort(String sql, Consumer<PreparedStatement> consumer) throws DataAccessException {
+        return Short.parseShort(queryForString(sql, consumer));
     }
 
     public int queryForInt(String sql) throws DataAccessException {
-        return Integer.parseInt(queryForOneValue(sql).toString());
+        return queryForInt(sql, PREPARED_STATEMENT_CONSUMER);
+    }
+
+    public int queryForInt(String sql, Consumer<PreparedStatement> consumer) throws DataAccessException {
+        return Integer.parseInt(queryForString(sql, consumer));
     }
 
     public float queryForFloat(String sql) throws DataAccessException {
-        return Float.parseFloat(queryForOneValue(sql).toString());
+        return queryForFloat(sql, PREPARED_STATEMENT_CONSUMER);
+    }
+
+    public float queryForFloat(String sql, Consumer<PreparedStatement> consumer) throws DataAccessException {
+        return Float.parseFloat(queryForString(sql, consumer));
     }
 
     public double queryForDouble(String sql) throws DataAccessException {
-        return Double.parseDouble(queryForOneValue(sql).toString());
+        return queryForDouble(sql, PREPARED_STATEMENT_CONSUMER);
     }
 
-    private Object queryForOneValue(String sql) throws DataAccessException {
-        Map<String, Object> resultMap = queryForMap(sql);
+    public double queryForDouble(String sql, Consumer<PreparedStatement> consumer) throws DataAccessException {
+        return Double.parseDouble(queryForString(sql, consumer));
+    }
+
+    public String queryForString(String sql) throws DataAccessException {
+        return queryForString(sql, PREPARED_STATEMENT_CONSUMER);
+    }
+
+    public String queryForString(String sql, Consumer<PreparedStatement> consumer) throws DataAccessException {
+        return queryForOneValue(sql, consumer).toString();
+    }
+
+    public Object queryForOneValue(String sql) throws DataAccessException {
+        return queryForOneValue(sql, PREPARED_STATEMENT_CONSUMER);
+    }
+
+    public Object queryForOneValue(String sql, Consumer<PreparedStatement> consumer) throws DataAccessException {
+        Map<String, Object> resultMap = queryForMap(sql, consumer);
         if (resultMap == null || resultMap.isEmpty()) {
             throw new DataAccessException("query result is null");
         }
@@ -156,7 +187,11 @@ public class SQLite3JdbcTemplate {
     }
 
     public Map<String, Object> queryForMap(String sql) throws DataAccessException {
-        List<Map<String, Object>> mapList = queryForList(sql);
+        return queryForMap(sql, PREPARED_STATEMENT_CONSUMER);
+    }
+
+    public Map<String, Object> queryForMap(String sql, Consumer<PreparedStatement> consumer) throws DataAccessException {
+        List<Map<String, Object>> mapList = queryForList(sql, consumer);
         Map<String, Object> retMap = null;
         if (mapList != null && !mapList.isEmpty()) {
             if (mapList.size() == 1) {
@@ -168,13 +203,20 @@ public class SQLite3JdbcTemplate {
     }
 
     public List<Map<String, Object>> queryForList(String sql) throws DataAccessException {
+        return queryForList(sql, PREPARED_STATEMENT_CONSUMER);
+    }
+
+    public List<Map<String, Object>> queryForList(String sql, Consumer<PreparedStatement> consumer) throws DataAccessException {
         return query(connection -> {
             List<Map<String, Object>> retMapList = null;
-            Statement statement = null;
+            PreparedStatement statement = null;
             ResultSet resultSet = null;
             try {
-                statement = connection.createStatement();
-                resultSet = statement.executeQuery(sql);
+                statement = connection.prepareStatement(sql);
+                if (consumer != null) {
+                    consumer.accept(statement);
+                }
+                resultSet = statement.executeQuery();
                 retMapList = getResultMapList(resultSet);
             } catch (SQLException exception) {
                 throw new DataAccessException(String.format("execute query failed, sql: %s", sql), exception);
