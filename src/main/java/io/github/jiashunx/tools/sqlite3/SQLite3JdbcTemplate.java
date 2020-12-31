@@ -94,21 +94,33 @@ public class SQLite3JdbcTemplate {
     }
 
     public int executeUpdate(String sql) {
+        return executeUpdate(sql, PREPARED_STATEMENT_CONSUMER);
+    }
+
+    public int executeUpdate(String sql, Consumer<PreparedStatement> consumer) throws DataAccessException {
         return write(connection -> {
-            Statement statement = null;
-            ResultSet resultSet = null;
+            PreparedStatement statement = null;
             try {
-                statement = connection.createStatement();
-                return statement.executeUpdate(sql);
-            } catch (Throwable throwable) {
-                if (logger.isErrorEnabled()) {
-                    logger.error("execute update failed, sql: {}", sql, throwable);
+                connection.setAutoCommit(false);
+                statement = connection.prepareStatement(sql);
+                if (consumer != null) {
+                    consumer.accept(statement);
                 }
+                int rowCount = statement.executeUpdate();
+                connection.commit();
+                return rowCount;
+            } catch (SQLException exception) {
+                try {
+                    connection.rollback();
+                } catch (SQLException exception1) {
+                    throw new DataAccessException(String.format(
+                            "execute update failed (rollback failed, reason: %s.), sql: %s"
+                            , exception1.getMessage(), sql), exception);
+                }
+                throw new DataAccessException(String.format("execute update failed(rollback success), sql: %s", sql), exception);
             } finally {
-                close(resultSet);
                 close(statement);
             }
-           return -1;
         });
     }
 
@@ -215,6 +227,14 @@ public class SQLite3JdbcTemplate {
     }
 
     public List<Map<String, Object>> queryForList(String sql, Consumer<PreparedStatement> consumer) throws DataAccessException {
+        return queryForResult(sql, consumer).getResultList();
+    }
+
+    public QueryResult queryForResult(String sql) throws DataAccessException {
+        return queryForResult(sql, PREPARED_STATEMENT_CONSUMER);
+    }
+
+    public QueryResult queryForResult(String sql, Consumer<PreparedStatement> consumer) throws DataAccessException {
         return query(connection -> {
             List<Map<String, Object>> retMapList = null;
             PreparedStatement statement = null;
@@ -225,7 +245,7 @@ public class SQLite3JdbcTemplate {
                     consumer.accept(statement);
                 }
                 resultSet = statement.executeQuery();
-                return getQueryResultObj(resultSet).getResultList();
+                return parseQueryResultObj(resultSet);
             } catch (SQLException exception) {
                 throw new DataAccessException(String.format("execute query failed, sql: %s", sql), exception);
             } finally {
@@ -235,12 +255,12 @@ public class SQLite3JdbcTemplate {
         });
     }
 
-    public static QueryResult getQueryResultObj(ResultSet resultSet) throws SQLException {
+    public static QueryResult parseQueryResultObj(ResultSet resultSet) throws NullPointerException, SQLException {
         if (resultSet == null) {
-            return null;
+            throw new NullPointerException();
         }
         List<Map<String, Object>> retMapList = new ArrayList<>();
-        Map<String, ResultColumn> columnMap = getResultColumnMap(resultSet);
+        Map<String, ResultColumn> columnMap = parseResultColumnMap(resultSet);
         while (resultSet.next()) {
             Map<String, Object> rowMap = new HashMap<>();
             for (Map.Entry<String, ResultColumn> entry: columnMap.entrySet()) {
@@ -300,40 +320,40 @@ public class SQLite3JdbcTemplate {
             }
             retMapList.add(rowMap);
         }
-        return  new QueryResult(columnMap, retMapList);
+        return new QueryResult(columnMap, retMapList);
     }
 
-    public static Map<String, ResultColumn> getResultColumnMap(ResultSet resultSet) throws SQLException {
-        Map<String, ResultColumn> retMap = null;
-        if (resultSet != null) {
-            ResultSetMetaData metaData = resultSet.getMetaData();
-            int columnCount = metaData.getColumnCount();
-            retMap = new HashMap<>();
-            for (int index = 1; index <= columnCount; index++) {
-                ResultColumn resultColumn = new ResultColumn();
-                String columnName = metaData.getColumnName(index);
-                resultColumn.setColumnName(columnName);
-                resultColumn.setColumnLabel(metaData.getColumnLabel(index));
-                resultColumn.setColumnType(metaData.getColumnType(index));
-                resultColumn.setColumnTypeName(metaData.getColumnTypeName(index));
-                resultColumn.setColumnClassName(metaData.getColumnClassName(index));
-                resultColumn.setColumnDisplaySize(metaData.getColumnDisplaySize(index));
-                resultColumn.setCatalogName(metaData.getCatalogName(index));
-                resultColumn.setPrecision(metaData.getPrecision(index));
-                resultColumn.setScale(metaData.getScale(index));
-                resultColumn.setSchemaName(metaData.getSchemaName(index));
-                resultColumn.setTableName(metaData.getTableName(index));
-                resultColumn.setAutoIncrement(metaData.isAutoIncrement(index));
-                resultColumn.setCaseSensitive(metaData.isCaseSensitive(index));
-                resultColumn.setCurrency(metaData.isCurrency(index));
-                resultColumn.setDefinitelyWritable(metaData.isDefinitelyWritable(index));
-                resultColumn.setNullable(metaData.isNullable(index));
-                resultColumn.setReadOnly(metaData.isReadOnly(index));
-                resultColumn.setWritable(metaData.isWritable(index));
-                resultColumn.setSearchable(metaData.isSearchable(index));
-                resultColumn.setSigned(metaData.isSigned(index));
-                retMap.put(columnName, resultColumn);
-            }
+    public static Map<String, ResultColumn> parseResultColumnMap(ResultSet resultSet) throws NullPointerException, SQLException {
+        if (resultSet == null) {
+            throw new NullPointerException();
+        }
+        Map<String, ResultColumn> retMap = new HashMap<>();
+        ResultSetMetaData metaData = resultSet.getMetaData();
+        int columnCount = metaData.getColumnCount();
+        for (int index = 1; index <= columnCount; index++) {
+            ResultColumn resultColumn = new ResultColumn();
+            String columnName = metaData.getColumnName(index);
+            resultColumn.setColumnName(columnName);
+            resultColumn.setColumnLabel(metaData.getColumnLabel(index));
+            resultColumn.setColumnType(metaData.getColumnType(index));
+            resultColumn.setColumnTypeName(metaData.getColumnTypeName(index));
+            resultColumn.setColumnClassName(metaData.getColumnClassName(index));
+            resultColumn.setColumnDisplaySize(metaData.getColumnDisplaySize(index));
+            resultColumn.setCatalogName(metaData.getCatalogName(index));
+            resultColumn.setPrecision(metaData.getPrecision(index));
+            resultColumn.setScale(metaData.getScale(index));
+            resultColumn.setSchemaName(metaData.getSchemaName(index));
+            resultColumn.setTableName(metaData.getTableName(index));
+            resultColumn.setAutoIncrement(metaData.isAutoIncrement(index));
+            resultColumn.setCaseSensitive(metaData.isCaseSensitive(index));
+            resultColumn.setCurrency(metaData.isCurrency(index));
+            resultColumn.setDefinitelyWritable(metaData.isDefinitelyWritable(index));
+            resultColumn.setNullable(metaData.isNullable(index));
+            resultColumn.setReadOnly(metaData.isReadOnly(index));
+            resultColumn.setWritable(metaData.isWritable(index));
+            resultColumn.setSearchable(metaData.isSearchable(index));
+            resultColumn.setSigned(metaData.isSigned(index));
+            retMap.put(columnName, resultColumn);
         }
         return retMap;
     }
