@@ -77,7 +77,7 @@ public abstract class SQLite3Connection {
         return reference.get();
     }
 
-    synchronized void close() throws ConnectionStatusChangedException {
+    public synchronized void close() throws ConnectionStatusChangedException {
         checkStatus(() -> {});
         writeStatus(() -> {
             try {
@@ -125,7 +125,7 @@ public abstract class SQLite3Connection {
         }
     }
 
-    void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 

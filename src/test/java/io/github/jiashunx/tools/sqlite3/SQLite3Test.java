@@ -1,6 +1,6 @@
 package io.github.jiashunx.tools.sqlite3;
 
-import io.github.jiashunx.tools.sqlite3.exception.DataAccessException;
+import io.github.jiashunx.tools.sqlite3.exception.SQLite3SQLException;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,20 +43,12 @@ public class SQLite3Test {
         logger.info("CREATE TABLE TABLE_2");
 
         jdbcTemplate.executeUpdate("INSERT INTO TABLE_1(LEE_NAME, LEE_AGE) VALUES(?,?)", statement -> {
-            try {
-                statement.setString(1, "jiashunx");
-                statement.setInt(2, 21);
-            } catch (SQLException exception) {
-                throw new DataAccessException(exception);
-            }
+            statement.setString(1, "jiashunx");
+            statement.setInt(2, 21);
         });
         jdbcTemplate.executeUpdate("INSERT INTO TABLE_2(LEE_NAME, LEE_AGE) VALUES(?,?)", statement -> {
-            try {
-                statement.setString(1, "jiashunx");
-                statement.setInt(2, 22);
-            } catch (SQLException exception) {
-                throw new DataAccessException(exception);
-            }
+            statement.setString(1, "jiashunx");
+            statement.setInt(2, 22);
         });
         List<Thread> threadList = new ArrayList<>();
         // table 1 读
@@ -81,12 +73,8 @@ public class SQLite3Test {
             Thread thread = new Thread(() -> {
                 for (int j = 0; j < 1000; j++) {
                     int effectedRowCount = jdbcTemplate.executeUpdate("INSERT INTO TABLE_1(LEE_NAME, LEE_AGE) VALUES(?,?)", statement -> {
-                        try {
-                            statement.setString(1, UUID.randomUUID().toString());
-                            statement.setInt(2, 22);
-                        } catch (SQLException exception) {
-                            throw new DataAccessException(exception);
-                        }
+                        statement.setString(1, UUID.randomUUID().toString());
+                        statement.setInt(2, 22);
                     });
                     logger.info("{} - effected row count: {}", Thread.currentThread().getName(), effectedRowCount);
                     try {
@@ -127,11 +115,7 @@ public class SQLite3Test {
             };
             String sql = "INSERT INTO TEST_LEE(LEE_NAME) VALUES(?)";
             int insertRowCount = jdbcTemplate.batchInsert(sql, mynameArr.length, (index, statement) -> {
-                try {
-                    statement.setString(1, mynameArr[index]);
-                } catch (SQLException exception) {
-                    throw new DataAccessException(exception);
-                }
+                statement.setString(1, mynameArr[index]);
             });
             System.out.println("batch insert row: " + insertRowCount);
             String[] mynameArr1 = new String[]{
@@ -142,11 +126,7 @@ public class SQLite3Test {
             jdbcTemplate.batchUpdate(new String[] {
                     sql, sql, sql
             }, (index, statement) -> {
-                try {
-                    statement.setString(1, mynameArr1[index]);
-                } catch (SQLException exception) {
-                    throw new DataAccessException(exception);
-                }
+                statement.setString(1, mynameArr1[index]);
             });
         }
         tableExists = jdbcTemplate.isTableExists("TEST_LEE");
