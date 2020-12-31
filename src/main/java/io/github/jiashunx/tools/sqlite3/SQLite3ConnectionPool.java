@@ -2,6 +2,7 @@ package io.github.jiashunx.tools.sqlite3;
 
 import io.github.jiashunx.tools.sqlite3.exception.ConnectionStatusChangedException;
 import io.github.jiashunx.tools.sqlite3.exception.PoolStatusChangedException;
+import io.github.jiashunx.tools.sqlite3.function.VoidFunc;
 import io.github.jiashunx.tools.sqlite3.model.ConnectionPoolStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
