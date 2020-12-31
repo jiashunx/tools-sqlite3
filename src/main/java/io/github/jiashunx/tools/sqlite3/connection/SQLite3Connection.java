@@ -1,6 +1,5 @@
 package io.github.jiashunx.tools.sqlite3.connection;
 
-import io.github.jiashunx.tools.sqlite3.SQLite3ConnectionPool;
 import io.github.jiashunx.tools.sqlite3.exception.ConnectionStatusChangedException;
 import io.github.jiashunx.tools.sqlite3.function.VoidFunc;
 import org.slf4j.Logger;
@@ -77,7 +76,7 @@ public abstract class SQLite3Connection {
         return reference.get();
     }
 
-    public synchronized void close() throws ConnectionStatusChangedException {
+    synchronized void close() throws ConnectionStatusChangedException {
         checkStatus(() -> {});
         writeStatus(() -> {
             try {
@@ -125,7 +124,7 @@ public abstract class SQLite3Connection {
         }
     }
 
-    public void setName(String name) {
+    void setName(String name) {
         this.name = name;
     }
 

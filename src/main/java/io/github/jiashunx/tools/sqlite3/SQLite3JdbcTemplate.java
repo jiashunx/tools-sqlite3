@@ -1,6 +1,8 @@
 package io.github.jiashunx.tools.sqlite3;
 
 import io.github.jiashunx.tools.sqlite3.connection.SQLite3Connection;
+import io.github.jiashunx.tools.sqlite3.connection.SQLite3ConnectionManager;
+import io.github.jiashunx.tools.sqlite3.connection.SQLite3ConnectionPool;
 import io.github.jiashunx.tools.sqlite3.connection.SQLite3PreparedStatement;
 import io.github.jiashunx.tools.sqlite3.exception.SQLite3SQLException;
 import io.github.jiashunx.tools.sqlite3.model.QueryResult;
@@ -26,7 +28,7 @@ public class SQLite3JdbcTemplate {
     private SQLite3ConnectionPool connectionPool;
 
     public SQLite3JdbcTemplate(String fileName) {
-        this(SQLite3Manager.getConnectionPool(fileName));
+        this(SQLite3ConnectionManager.getConnectionPool(fileName));
     }
 
     public SQLite3JdbcTemplate(SQLite3ConnectionPool pool) {
@@ -322,7 +324,6 @@ public class SQLite3JdbcTemplate {
 
     public QueryResult queryForResult(String sql, Consumer<SQLite3PreparedStatement> consumer) throws SQLite3SQLException {
         return query(connection -> {
-            List<Map<String, Object>> retMapList = null;
             SQLite3PreparedStatement statement = null;
             ResultSet resultSet = null;
             try {

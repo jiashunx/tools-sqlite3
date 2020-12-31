@@ -1,8 +1,5 @@
-package io.github.jiashunx.tools.sqlite3;
+package io.github.jiashunx.tools.sqlite3.connection;
 
-import io.github.jiashunx.tools.sqlite3.connection.SQLite3Connection;
-import io.github.jiashunx.tools.sqlite3.connection.SQLite3ReadOnlyConnection;
-import io.github.jiashunx.tools.sqlite3.connection.SQLite3WriteOnlyConnection;
 import io.github.jiashunx.tools.sqlite3.exception.ConnectionStatusChangedException;
 import io.github.jiashunx.tools.sqlite3.exception.PoolStatusChangedException;
 import io.github.jiashunx.tools.sqlite3.function.VoidFunc;
@@ -49,7 +46,6 @@ public class SQLite3ConnectionPool {
         this.writeConnectionPoolStatus = ConnectionPoolStatus.RUNNING;
         for (int index = 0; index < readConnectionArr.length; index++) {
             Connection connection = Objects.requireNonNull(readConnectionArr[index]);
-//            connection.setReadOnly(true);
             SQLite3ReadOnlyConnection readConnection = new SQLite3ReadOnlyConnection(this, connection);
             readConnection.setName(this.poolName + "-read-" + (index + 1));
             this.readConnectionPool.add(readConnection);

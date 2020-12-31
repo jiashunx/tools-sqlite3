@@ -1,4 +1,4 @@
-package io.github.jiashunx.tools.sqlite3;
+package io.github.jiashunx.tools.sqlite3.connection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,17 +6,15 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
  * @author jiashunx
  */
-public class SQLite3Manager {
+public class SQLite3ConnectionManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(SQLite3Manager.class);
+    private static final Logger logger = LoggerFactory.getLogger(SQLite3ConnectionManager.class);
 
     private static final Map<String, SQLite3ConnectionPool> POOL_MAP  = new HashMap<>();
 
@@ -26,7 +24,7 @@ public class SQLite3Manager {
     public static final String DEFAULT_USERNAME = "sqlite";
     public static final String DEFAULT_PASSWORD = "sqlite";
 
-    private SQLite3Manager() {}
+    private SQLite3ConnectionManager() {}
 
     public static SQLite3ConnectionPool getConnectionPool(String fileName) {
         return getConnectionPool(fileName, DEFAULT_POOL_SIZE);
