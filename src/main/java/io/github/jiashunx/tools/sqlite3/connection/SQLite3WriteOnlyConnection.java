@@ -1,5 +1,6 @@
-package io.github.jiashunx.tools.sqlite3;
+package io.github.jiashunx.tools.sqlite3.connection;
 
+import io.github.jiashunx.tools.sqlite3.SQLite3ConnectionPool;
 import io.github.jiashunx.tools.sqlite3.exception.ConnectionStatusChangedException;
 
 import java.sql.Connection;

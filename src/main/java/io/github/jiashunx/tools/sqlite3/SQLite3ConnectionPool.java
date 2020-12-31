@@ -1,5 +1,8 @@
 package io.github.jiashunx.tools.sqlite3;
 
+import io.github.jiashunx.tools.sqlite3.connection.SQLite3Connection;
+import io.github.jiashunx.tools.sqlite3.connection.SQLite3ReadOnlyConnection;
+import io.github.jiashunx.tools.sqlite3.connection.SQLite3WriteOnlyConnection;
 import io.github.jiashunx.tools.sqlite3.exception.ConnectionStatusChangedException;
 import io.github.jiashunx.tools.sqlite3.exception.PoolStatusChangedException;
 import io.github.jiashunx.tools.sqlite3.function.VoidFunc;

@@ -1,5 +1,6 @@
 package io.github.jiashunx.tools.sqlite3;
 
+import io.github.jiashunx.tools.sqlite3.connection.SQLite3Connection;
 import io.github.jiashunx.tools.sqlite3.exception.DataAccessException;
 import io.github.jiashunx.tools.sqlite3.model.QueryResult;
 import io.github.jiashunx.tools.sqlite3.util.SQLite3Utils;
