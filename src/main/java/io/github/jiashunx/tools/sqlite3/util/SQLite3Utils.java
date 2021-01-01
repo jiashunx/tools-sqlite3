@@ -1,10 +1,17 @@
 package io.github.jiashunx.tools.sqlite3.util;
 
+import io.github.jiashunx.tools.sqlite3.exception.SQLite3MappingException;
+import io.github.jiashunx.tools.sqlite3.mapping.SQLite3Column;
+import io.github.jiashunx.tools.sqlite3.mapping.SQLite3Id;
+import io.github.jiashunx.tools.sqlite3.mapping.SQLite3Table;
 import io.github.jiashunx.tools.sqlite3.model.QueryResult;
 import io.github.jiashunx.tools.sqlite3.model.ResultColumn;
+import io.github.jiashunx.tools.sqlite3.model.TableColumnModel;
+import io.github.jiashunx.tools.sqlite3.model.TableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,7 +25,97 @@ public class SQLite3Utils {
 
     private static final Logger logger = LoggerFactory.getLogger(SQLite3Utils.class);
 
+    private static final Map<String, TableModel> CLASS_TABLE_MAP = new HashMap<>();
+
     private SQLite3Utils() {}
+
+    public static TableModel getClassTableModel(Class<?> klass) throws NullPointerException, SQLite3MappingException {
+        if (klass == null) {
+            throw new NullPointerException();
+        }
+        String klassName = klass.getName();
+        TableModel tableModel = CLASS_TABLE_MAP.get(klassName);
+        if (tableModel == null) {
+            synchronized (SQLite3Utils.class) {
+                tableModel = CLASS_TABLE_MAP.get(klassName);
+                if (tableModel == null) {
+                    try {
+                        SQLite3Table tableAnnotation = klass.getAnnotation(SQLite3Table.class);
+                        if (tableAnnotation == null) {
+                            throw new SQLite3MappingException(String.format("class[%s] doesn't have @SQLite3Table annotation", klassName));
+                        }
+                        String tableName = tableAnnotation.tableName().trim();
+                        if (tableName.isEmpty()) {
+                            throw new SQLite3MappingException(String.format("class[%s] has @SQLite3Table annotation, but tableName is empty", klassName));
+                        }
+                        Field[] fields = klass.getDeclaredFields();
+                        if (fields.length == 0) {
+                            throw new SQLite3MappingException(String.format("class[%s] has no declared fields", klassName));
+                        }
+                        TableColumnModel idColumnModel = null;
+                        Map<String, TableColumnModel> columnModelMap = new HashMap<>();
+                        for (Field field: fields) {
+                            String fieldName = field.getName();
+                            SQLite3Column columnAnnotation = field.getAnnotation(SQLite3Column.class);
+                            SQLite3Id idAnnotation = field.getAnnotation(SQLite3Id.class);
+                            if (idAnnotation != null && columnAnnotation == null) {
+                                throw new SQLite3MappingException(String.format(
+                                        "class[%s] field [%s] has @SQLite3Id annotation, but has no @SQLite3Column annotation"
+                                        , klassName, fieldName));
+                            }
+                            if (columnAnnotation != null) {
+                                String columnName = columnAnnotation.columnName().trim();
+                                if (columnName.isEmpty()) {
+                                    throw new SQLite3MappingException(String.format(
+                                            "class[%s] field [%s] has @SQLite3Column annotation, but columnName is empty"
+                                            , klassName, fieldName));
+                                }
+                                TableColumnModel columnModel = new TableColumnModel();
+                                columnModel.setColumnName(columnName);
+                                columnModel.setColumnType(0);
+                                columnModel.setField(field);
+                                columnModel.setFieldName(fieldName);
+                                columnModel.setFieldType(field.getType());
+                                columnModel.setIdColumn(false);
+                                if (columnModelMap.containsKey(columnName)) {
+                                    throw new SQLite3MappingException(String.format(
+                                            "class[%s] has more than one field mapping to table column: %s"
+                                            , klassName, columnName));
+                                }
+                                if (idAnnotation != null) {
+                                    if (idColumnModel != null) {
+                                        throw new SQLite3MappingException(String.format(
+                                                "class[%s] has more than one field with @SQLite3Id annotation, such as %s, %s"
+                                                , klassName, idColumnModel.getFieldName(), fieldName));
+                                    }
+                                    columnModel.setIdColumn(true);
+                                    idColumnModel = columnModel;
+                                }
+                                columnModelMap.put(columnName, columnModel);
+                            }
+                        }
+                        if (idColumnModel == null) {
+                            throw new SQLite3MappingException(String.format("class[%s] has no field with annotation: @SQLite3Id", klassName));
+                        }
+                        tableModel = new TableModel();
+                        tableModel.setTableName(tableName);
+                        tableModel.setIdColumnModel(idColumnModel);
+                        tableModel.setColumnModelMap(columnModelMap);
+                        CLASS_TABLE_MAP.put(klassName, tableModel);
+                    } catch (SecurityException exception) {
+                        throw new SQLite3MappingException(String.format("visit class[%s] fields failed.", klassName), exception);
+                    } catch (Throwable throwable) {
+                        if (throwable instanceof SQLite3MappingException) {
+                            throw (SQLite3MappingException) throwable;
+                        }
+                        throw new SQLite3MappingException(throwable);
+                    }
+                }
+            }
+        }
+        return tableModel;
+
+    }
 
     public static QueryResult parseQueryResultObj(ResultSet resultSet) throws NullPointerException, SQLException {
         if (resultSet == null) {
