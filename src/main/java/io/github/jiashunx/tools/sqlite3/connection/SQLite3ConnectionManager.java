@@ -49,7 +49,12 @@ public class SQLite3ConnectionManager {
                     , MIN_POOL_SIZE, MAX_POOL_SIZE));
         }
         try {
-            String dbFilePath = new File(fileName).getAbsolutePath().replace("\\", "/");
+            File dbFile = new File(fileName);
+            String dbFilePath = dbFile.getAbsolutePath().replace("\\", "/");
+            File dbFileDir = dbFile.getParentFile();
+            if (!dbFileDir.exists()) {
+                dbFileDir.mkdirs();
+            }
             String $url = "jdbc:sqlite:" + dbFilePath;
             String $username = String.valueOf(username);
             String $password = String.valueOf(password);
