@@ -1,17 +1,48 @@
 package io.github.jiashunx.tools.sqlite3.model;
 
+import io.github.jiashunx.tools.sqlite3.exception.SQLite3MappingException;
+
 import java.lang.reflect.Field;
 
 /**
  * @author jiashunx
  */
 public class TableColumnModel {
+
+    private String klassName;
+    private String tableName;
     private boolean idColumn;
     private String columnName;
     private int columnType;
     private String fieldName;
     private Class<?> fieldType;
     private Field field;
+
+    public Object getFieldValue(Object object) {
+        try {
+            field.setAccessible(true);
+            return field.get(object);
+        } catch (Throwable throwable) {
+            throw new SQLite3MappingException(String.format(
+                    "get field %s[class: %s, table: %s] value failed.", fieldName, klassName, tableName));
+        }
+    }
+
+    public String getKlassName() {
+        return klassName;
+    }
+
+    public void setKlassName(String klassName) {
+        this.klassName = klassName;
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
 
     public boolean isIdColumn() {
         return idColumn;

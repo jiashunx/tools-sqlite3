@@ -13,10 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author jiashunx
@@ -71,6 +68,8 @@ public class SQLite3Utils {
                                             , klassName, fieldName));
                                 }
                                 TableColumnModel columnModel = new TableColumnModel();
+                                columnModel.setKlassName(klassName);
+                                columnModel.setTableName(tableName);
                                 columnModel.setColumnName(columnName);
                                 columnModel.setColumnType(0);
                                 columnModel.setField(field);
@@ -97,10 +96,20 @@ public class SQLite3Utils {
                         if (idColumnModel == null) {
                             throw new SQLite3MappingException(String.format("class[%s] has no field with annotation: @SQLite3Id", klassName));
                         }
+                        List<TableColumnModel> columnModelList = new ArrayList<>(columnModelMap.size());
+                        columnModelMap.values().forEach(columnModel -> {
+                            if (columnModel.isIdColumn()) {
+                                return;
+                            }
+                            columnModelList.add(columnModel);
+                        });
+                        columnModelList.add(idColumnModel);
                         tableModel = new TableModel();
+                        tableModel.setKlassName(klassName);
                         tableModel.setTableName(tableName);
                         tableModel.setIdColumnModel(idColumnModel);
                         tableModel.setColumnModelMap(columnModelMap);
+                        tableModel.setColumnModelList(columnModelList);
                         CLASS_TABLE_MAP.put(klassName, tableModel);
                     } catch (SecurityException exception) {
                         throw new SQLite3MappingException(String.format("visit class[%s] fields failed.", klassName), exception);
