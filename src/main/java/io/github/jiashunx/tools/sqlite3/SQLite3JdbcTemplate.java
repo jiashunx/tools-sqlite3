@@ -7,7 +7,7 @@ import io.github.jiashunx.tools.sqlite3.connection.SQLite3PreparedStatement;
 import io.github.jiashunx.tools.sqlite3.exception.SQLite3MappingException;
 import io.github.jiashunx.tools.sqlite3.exception.SQLite3SQLException;
 import io.github.jiashunx.tools.sqlite3.model.QueryResult;
-import io.github.jiashunx.tools.sqlite3.model.TableColumnModel;
+import io.github.jiashunx.tools.sqlite3.model.TableColumnMetadata;
 import io.github.jiashunx.tools.sqlite3.model.TableModel;
 import io.github.jiashunx.tools.sqlite3.util.SQLite3Utils;
 import org.slf4j.Logger;
@@ -111,13 +111,18 @@ public class SQLite3JdbcTemplate {
 
     /********************************************* ↓ 通用API ↓ *********************************************/
 
-    public int insert(Object object) throws SQLite3SQLException, SQLite3MappingException {
+    public int update(Object object) throws SQLite3SQLException, SQLite3MappingException {
         List<Object> objectList = new ArrayList<>(1);
         objectList.add(object);
-        return batchInsert(objectList);
+        return update(objectList);
     }
 
-    public int batchInsert(List<?> objList) throws SQLite3SQLException, SQLite3MappingException {
+    public int update(List<?> objList) throws SQLite3SQLException, SQLite3MappingException {
+        return updateOrInsert(objList, TableModel::getUpdateSQL);
+    }
+
+    private int updateOrInsert(List<?> objList, Function<TableModel, String> sqlFunc) throws SQLite3SQLException, SQLite3MappingException {
+        int retValue = 0;
         List<?> $objList = Objects.requireNonNull(objList);
         if (!$objList.isEmpty()) {
             List<String> sqlList = new ArrayList<>();
@@ -126,24 +131,32 @@ public class SQLite3JdbcTemplate {
                 Object $object = Objects.requireNonNull(object);
                 Class<?> objClass = $object.getClass();
                 TableModel tableModel = SQLite3Utils.getClassTableModel(objClass);
-                sqlList.add(tableModel.getInsertSQL());
-                consumerList.add(statement -> {
-                    List<TableColumnModel> columnModelList = tableModel.getColumnModelList();
-                    for (int index = 0, size = columnModelList.size(); index < size; index++) {
-                        TableColumnModel columnModel = columnModelList.get(index);
-                        int insertIndex = index + 1;
-                        if (columnModel.getFieldType() == String.class) {
-                            statement.setString(insertIndex, (String) columnModel.getFieldValue($object));
-                        }
-                        // TODO 补充其他类型
-                    }
-                });
+                Map<String, TableColumnMetadata> columnMetadata = tableModel.getColumnMetadata();
+                if (columnMetadata == null) {
+                    columnMetadata = queryTableColumnMetadata(tableModel.getTableName());
+                    tableModel.setColumnMetadata(columnMetadata);
+                }
+                sqlList.add(sqlFunc.apply(tableModel));
+                consumerList.add(SQLite3Utils.buildTableConsumer($object, tableModel));
             });
-            batchUpdate(sqlList.toArray(new String[0]), (index, statement) -> {
+            int[] intArr = batchUpdate(sqlList.toArray(new String[0]), (index, statement) -> {
                 consumerList.get(index).accept(statement);
             });
+            for (int value: intArr) {
+                retValue += value;
+            }
         }
-        return 0;
+        return retValue;
+    }
+
+    public int insert(Object object) throws SQLite3SQLException, SQLite3MappingException {
+        List<Object> objectList = new ArrayList<>(1);
+        objectList.add(object);
+        return insert(objectList);
+    }
+
+    public int insert(List<?> objList) throws SQLite3SQLException, SQLite3MappingException {
+        return updateOrInsert(objList, TableModel::getInsertSQL);
     }
 
     public int[] batchUpdate(String[] sqlArr) throws SQLite3SQLException {
@@ -261,6 +274,24 @@ public class SQLite3JdbcTemplate {
             return 0;
         }
         return queryForInt("SELECT COUNT(1) FROM " + tableName);
+    }
+
+    public Map<String, TableColumnMetadata> queryTableColumnMetadata(String tableName) throws SQLite3SQLException {
+        String sql = String.format("SELECT * FROM %s LIMIT 0", tableName);
+        return query(connection -> {
+            SQLite3PreparedStatement statement = null;
+            ResultSet resultSet = null;
+            try {
+                statement = new SQLite3PreparedStatement(connection.prepareStatement(sql));
+                resultSet = statement.executeQuery();
+                return SQLite3Utils.parseTableColumnMetadata(resultSet);
+            } catch (Throwable exception) {
+                throw new SQLite3SQLException(String.format("query table column message failed, sql: %s", sql), exception);
+            } finally {
+                SQLite3Utils.close(resultSet);
+                SQLite3Utils.close(statement);
+            }
+        });
     }
 
     public boolean queryForBoolean(String sql) throws SQLite3SQLException {

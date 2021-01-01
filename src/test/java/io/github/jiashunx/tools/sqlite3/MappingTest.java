@@ -21,8 +21,22 @@ public class MappingTest {
         MyEntity entity = new MyEntity();
         entity.setMyid(UUID.randomUUID().toString());
         entity.setMyname(UUID.randomUUID().toString());
+
+        // 插入测试
         jdbcTemplate0.insert(entity);
         myTableRowCount = jdbcTemplate0.queryTableRowCount(tableName);
         System.out.println(tableName + " row count ? " + myTableRowCount);
+        System.out.println(jdbcTemplate0.queryForMap("SELECT * FROM MY_TABLE WHERE MYID=?", statement -> {
+            statement.setString(1, entity.getMyid());
+        }));
+
+        // 更新测试
+        entity.setMyname("hhhhhhhhhhhhhhhhhhhhhhhhh");
+        jdbcTemplate0.update(entity);
+        myTableRowCount = jdbcTemplate0.queryTableRowCount(tableName);
+        System.out.println(tableName + " row count ? " + myTableRowCount);
+        System.out.println(jdbcTemplate0.queryForMap("SELECT * FROM MY_TABLE WHERE MYID=?", statement -> {
+            statement.setString(1, entity.getMyid());
+        }));
     }
 }

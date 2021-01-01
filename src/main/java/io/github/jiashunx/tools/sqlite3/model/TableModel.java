@@ -28,6 +28,11 @@ public class TableModel {
      */
     private List<TableColumnModel> columnModelList;
 
+    /**
+     * 数据表字段定义信息.
+     */
+    private Map<String, TableColumnMetadata> columnMetadata;
+
     public String getInsertSQL() {
         StringBuilder builder = new StringBuilder("INSERT INTO ");
         builder.append(tableName).append("(");
@@ -96,5 +101,13 @@ public class TableModel {
 
     public void setColumnModelList(List<TableColumnModel> columnModelList) {
         this.columnModelList = columnModelList;
+    }
+
+    public Map<String, TableColumnMetadata> getColumnMetadata() {
+        return columnMetadata;
+    }
+
+    public void setColumnMetadata(Map<String, TableColumnMetadata> columnMetadata) {
+        this.columnMetadata = columnMetadata;
     }
 }
