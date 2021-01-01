@@ -7,7 +7,7 @@ import io.github.jiashunx.tools.sqlite3.connection.SQLite3PreparedStatement;
 import io.github.jiashunx.tools.sqlite3.exception.SQLite3MappingException;
 import io.github.jiashunx.tools.sqlite3.exception.SQLite3SQLException;
 import io.github.jiashunx.tools.sqlite3.model.QueryResult;
-import io.github.jiashunx.tools.sqlite3.model.TableColumnMetadata;
+import io.github.jiashunx.tools.sqlite3.model.ColumnMetadata;
 import io.github.jiashunx.tools.sqlite3.model.TableModel;
 import io.github.jiashunx.tools.sqlite3.util.SQLite3Utils;
 import org.slf4j.Logger;
@@ -131,7 +131,7 @@ public class SQLite3JdbcTemplate {
                 Object $object = Objects.requireNonNull(object);
                 Class<?> objClass = $object.getClass();
                 TableModel tableModel = SQLite3Utils.getClassTableModel(objClass);
-                Map<String, TableColumnMetadata> columnMetadata = tableModel.getColumnMetadata();
+                Map<String, ColumnMetadata> columnMetadata = tableModel.getColumnMetadata();
                 if (columnMetadata == null) {
                     columnMetadata = queryTableColumnMetadata(tableModel.getTableName());
                     tableModel.setColumnMetadata(columnMetadata);
@@ -276,7 +276,7 @@ public class SQLite3JdbcTemplate {
         return queryForInt("SELECT COUNT(1) FROM " + tableName);
     }
 
-    public Map<String, TableColumnMetadata> queryTableColumnMetadata(String tableName) throws SQLite3SQLException {
+    public Map<String, ColumnMetadata> queryTableColumnMetadata(String tableName) throws SQLite3SQLException {
         String sql = String.format("SELECT * FROM %s LIMIT 0", tableName);
         return query(connection -> {
             SQLite3PreparedStatement statement = null;

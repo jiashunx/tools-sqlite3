@@ -31,7 +31,7 @@ public class TableModel {
     /**
      * 数据表字段定义信息.
      */
-    private Map<String, TableColumnMetadata> columnMetadata;
+    private Map<String, ColumnMetadata> columnMetadata;
 
     public String getInsertSQL() {
         StringBuilder builder = new StringBuilder("INSERT INTO ");
@@ -103,11 +103,11 @@ public class TableModel {
         this.columnModelList = columnModelList;
     }
 
-    public Map<String, TableColumnMetadata> getColumnMetadata() {
+    public Map<String, ColumnMetadata> getColumnMetadata() {
         return columnMetadata;
     }
 
-    public void setColumnMetadata(Map<String, TableColumnMetadata> columnMetadata) {
+    public void setColumnMetadata(Map<String, ColumnMetadata> columnMetadata) {
         this.columnMetadata = columnMetadata;
     }
 }

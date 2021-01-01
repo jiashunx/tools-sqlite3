@@ -6,7 +6,7 @@ import io.github.jiashunx.tools.sqlite3.mapping.SQLite3Column;
 import io.github.jiashunx.tools.sqlite3.mapping.SQLite3Id;
 import io.github.jiashunx.tools.sqlite3.mapping.SQLite3Table;
 import io.github.jiashunx.tools.sqlite3.model.QueryResult;
-import io.github.jiashunx.tools.sqlite3.model.TableColumnMetadata;
+import io.github.jiashunx.tools.sqlite3.model.ColumnMetadata;
 import io.github.jiashunx.tools.sqlite3.model.TableColumnModel;
 import io.github.jiashunx.tools.sqlite3.model.TableModel;
 import org.slf4j.Logger;
@@ -137,12 +137,12 @@ public class SQLite3Utils {
         }
         return statement -> {
             String tableName = tableModel.getTableName();
-            Map<String, TableColumnMetadata> columnMetadataMap = tableModel.getColumnMetadata();
+            Map<String, ColumnMetadata> columnMetadataMap = tableModel.getColumnMetadata();
             List<TableColumnModel> columnModelList = tableModel.getColumnModelList();
             for (int index = 0, size = columnModelList.size(); index < size; index++) {
                 TableColumnModel columnModel = columnModelList.get(index);
                 String columnName = columnModel.getColumnName();
-                TableColumnMetadata columnMetadata = columnMetadataMap.get(columnName);
+                ColumnMetadata columnMetadata = columnMetadataMap.get(columnName);
                 if (columnMetadata == null) {
                     throw new SQLite3MappingException(String.format("table[%s] has no field: %s", tableName, columnName));
                 }
@@ -212,15 +212,15 @@ public class SQLite3Utils {
             throw new NullPointerException();
         }
         List<Map<String, Object>> retMapList = new ArrayList<>();
-        Map<String, TableColumnMetadata> columnMap = parseTableColumnMetadata(resultSet);
+        Map<String, ColumnMetadata> columnMap = parseTableColumnMetadata(resultSet);
         while (resultSet.next()) {
             Map<String, Object> rowMap = new HashMap<>();
-            for (Map.Entry<String, TableColumnMetadata> entry: columnMap.entrySet()) {
+            for (Map.Entry<String, ColumnMetadata> entry: columnMap.entrySet()) {
                 String columnName = entry.getKey();
-                TableColumnMetadata columnModel = entry.getValue();
-                String columnLabel = columnModel.getColumnLabel();
+                ColumnMetadata columnMetadata = entry.getValue();
+                String columnLabel = columnMetadata.getColumnLabel();
                 Object columnValue = null;
-                switch (columnModel.getColumnType()) {
+                switch (columnMetadata.getColumnType()) {
                     case Types.BIT:
                         columnValue = resultSet.getBoolean(columnLabel);
                         break;
@@ -253,13 +253,13 @@ public class SQLite3Utils {
                         columnValue = resultSet.getString(columnLabel);
                         break;
                     case Types.DATE:
-                        columnValue = transferDate(resultSet.getDate(columnLabel));
+                        columnValue = resultSet.getDate(columnLabel);
                         break;
                     case Types.TIME:
-                        columnValue = transferTime(resultSet.getTime(columnLabel));
+                        columnValue = resultSet.getTime(columnLabel);
                         break;
                     case Types.TIMESTAMP:
-                        columnValue = transferTimestamp(resultSet.getTimestamp(columnLabel));
+                        columnValue = resultSet.getTimestamp(columnLabel);
                         break;
                     case Types.BINARY:
                     case Types.VARBINARY:
@@ -277,15 +277,15 @@ public class SQLite3Utils {
         return new QueryResult(columnMap, retMapList);
     }
 
-    public static Map<String, TableColumnMetadata> parseTableColumnMetadata(ResultSet resultSet) throws NullPointerException, SQLException {
+    public static Map<String, ColumnMetadata> parseTableColumnMetadata(ResultSet resultSet) throws NullPointerException, SQLException {
         if (resultSet == null) {
             throw new NullPointerException();
         }
-        Map<String, TableColumnMetadata> retMap = new HashMap<>();
+        Map<String, ColumnMetadata> retMap = new HashMap<>();
         ResultSetMetaData metaData = resultSet.getMetaData();
         int columnCount = metaData.getColumnCount();
         for (int index = 1; index <= columnCount; index++) {
-            TableColumnMetadata columnMetadata = new TableColumnMetadata();
+            ColumnMetadata columnMetadata = new ColumnMetadata();
             String columnName = metaData.getColumnName(index);
             columnMetadata.setColumnName(columnName);
             columnMetadata.setColumnLabel(metaData.getColumnLabel(index));

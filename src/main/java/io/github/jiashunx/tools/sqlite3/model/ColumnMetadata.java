@@ -3,7 +3,7 @@ package io.github.jiashunx.tools.sqlite3.model;
 /**
  * @author jiashunx
  */
-public class TableColumnMetadata {
+public class ColumnMetadata {
     private String catalogName;
     private String columnClassName;
     private int columnDisplaySize;

@@ -9,16 +9,16 @@ import java.util.Objects;
  */
 public class QueryResult {
 
-    private final Map<String, TableColumnMetadata> columnMap;
+    private final Map<String, ColumnMetadata> columnMetadataMap;
     private final List<Map<String, Object>> resultList;
 
-    public QueryResult(Map<String, TableColumnMetadata> columnMap, List<Map<String, Object>> resultList) {
-        this.columnMap = Objects.requireNonNull(columnMap);
+    public QueryResult(Map<String, ColumnMetadata> columnMetadataMap, List<Map<String, Object>> resultList) {
+        this.columnMetadataMap = Objects.requireNonNull(columnMetadataMap);
         this.resultList = resultList;
     }
 
-    public Map<String, TableColumnMetadata> getColumnMap() {
-        return columnMap;
+    public Map<String, ColumnMetadata> getColumnMetadataMap() {
+        return columnMetadataMap;
     }
 
     public List<Map<String, Object>> getResultList() {
