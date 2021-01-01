@@ -6,9 +6,7 @@ import io.github.jiashunx.tools.sqlite3.connection.SQLite3ConnectionPool;
 import io.github.jiashunx.tools.sqlite3.connection.SQLite3PreparedStatement;
 import io.github.jiashunx.tools.sqlite3.exception.SQLite3MappingException;
 import io.github.jiashunx.tools.sqlite3.exception.SQLite3SQLException;
-import io.github.jiashunx.tools.sqlite3.model.QueryResult;
-import io.github.jiashunx.tools.sqlite3.model.ColumnMetadata;
-import io.github.jiashunx.tools.sqlite3.model.TableModel;
+import io.github.jiashunx.tools.sqlite3.model.*;
 import io.github.jiashunx.tools.sqlite3.util.SQLite3Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,6 +108,31 @@ public class SQLite3JdbcTemplate {
 
 
     /********************************************* ↓ 通用API ↓ *********************************************/
+
+    public <R> R queryForObj(String sql, Class<R> klass) throws SQLite3SQLException, SQLite3MappingException {
+        return queryForObj(sql, statement -> {}, klass);
+    }
+
+    public <R> R queryForObj(String sql, Consumer<SQLite3PreparedStatement> consumer, Class<R> klass)
+            throws SQLite3SQLException, SQLite3MappingException {
+        List<R> retList = queryForList(sql, consumer, klass);
+        if (retList == null || retList.isEmpty()) {
+            return null;
+        }
+        if (retList.size() > 1) {
+            throw new SQLite3SQLException("query result contains more than one column");
+        }
+        return retList.get(0);
+    }
+
+    public <R> List<R> queryForList(String sql, Class<R> klass) throws SQLite3SQLException, SQLite3MappingException {
+        return queryForList(sql, statement -> {}, klass);
+    }
+
+    public <R> List<R> queryForList(String sql, Consumer<SQLite3PreparedStatement> consumer, Class<R> klass)
+            throws SQLite3SQLException, SQLite3MappingException {
+        return SQLite3Utils.parseQueryResult(queryForResult(sql, consumer), klass);
+    }
 
     public int update(Object object) throws SQLite3SQLException, SQLite3MappingException {
         List<Object> objectList = new ArrayList<>(1);
@@ -386,7 +409,7 @@ public class SQLite3JdbcTemplate {
     }
 
     public List<Map<String, Object>> queryForList(String sql, Consumer<SQLite3PreparedStatement> consumer) throws SQLite3SQLException {
-        return queryForResult(sql, consumer).getResultList();
+        return queryForResult(sql, consumer).getRetMapList();
     }
 
     public QueryResult queryForResult(String sql) throws SQLite3SQLException {

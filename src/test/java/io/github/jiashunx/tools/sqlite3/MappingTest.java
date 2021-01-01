@@ -2,6 +2,7 @@ package io.github.jiashunx.tools.sqlite3;
 
 import io.github.jiashunx.tools.sqlite3.connection.SQLite3ConnectionManager;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -38,5 +39,13 @@ public class MappingTest {
         System.out.println(jdbcTemplate0.queryForMap("SELECT * FROM MY_TABLE WHERE MYID=?", statement -> {
             statement.setString(1, entity.getMyid());
         }));
+
+        MyEntity myEntity = jdbcTemplate0.queryForObj("SELECT * FROM MY_TABLE WHERE MYID=?", statement -> {
+            statement.setString(1, entity.getMyid());
+        }, MyEntity.class);
+        System.out.println(myEntity);
+
+        List<MyEntity> myEntityList = jdbcTemplate0.queryForList("SELECT * FROM MY_TABLE", MyEntity.class);
+        System.out.println(myEntityList.size());
     }
 }

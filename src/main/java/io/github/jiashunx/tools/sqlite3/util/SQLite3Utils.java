@@ -5,10 +5,7 @@ import io.github.jiashunx.tools.sqlite3.exception.SQLite3MappingException;
 import io.github.jiashunx.tools.sqlite3.mapping.SQLite3Column;
 import io.github.jiashunx.tools.sqlite3.mapping.SQLite3Id;
 import io.github.jiashunx.tools.sqlite3.mapping.SQLite3Table;
-import io.github.jiashunx.tools.sqlite3.model.QueryResult;
-import io.github.jiashunx.tools.sqlite3.model.ColumnMetadata;
-import io.github.jiashunx.tools.sqlite3.model.TableColumnModel;
-import io.github.jiashunx.tools.sqlite3.model.TableModel;
+import io.github.jiashunx.tools.sqlite3.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +15,7 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -27,9 +25,125 @@ public class SQLite3Utils {
 
     private static final Logger logger = LoggerFactory.getLogger(SQLite3Utils.class);
 
+    private static final Map<String, QueryRetClassModel> QUERY_RET_CLASS_MAP = new HashMap<>();
+
     private static final Map<String, TableModel> CLASS_TABLE_MAP = new HashMap<>();
 
     private SQLite3Utils() {}
+
+    public static <R> List<R> parseQueryResult(QueryResult queryResult, Class<R> klass) throws NullPointerException, SQLite3MappingException {
+        if (queryResult == null || klass == null) {
+            throw new NullPointerException();
+        }
+        String klassName = klass.getName();
+        QueryRetClassModel retClassModel = getClassQueryRetModel(klass);
+        Map<String, QueryRetColumnModel> retColumnModelMap = retClassModel.getRetColumnModelMap();
+        List<Map<String, Object>> retMapList = queryResult.getRetMapList();
+        Map<String, ColumnMetadata> columnMetadataMap = queryResult.getColumnMetadataMap();
+        List<R> retObjList = null;
+        if (retMapList != null) {
+            AtomicReference<List<R>> retObjListRef = new AtomicReference<>(new ArrayList<>(retMapList.size()));
+            retMapList.forEach(rowMap -> {
+                R instance = null;
+                try {
+                    instance = klass.newInstance();
+                } catch (Throwable throwable) {
+                    throw new SQLite3MappingException(String.format("create class[%s] instance failed.", klassName), throwable);
+                }
+                AtomicReference<R> instanceRef = new AtomicReference<>(instance);
+                rowMap.forEach((columnName, columnValue) -> {
+                    QueryRetColumnModel retColumnModel = retColumnModelMap.get(columnName);
+                    if (retColumnModel != null) {
+                        ColumnMetadata columnMetadata = columnMetadataMap.get(columnName);
+                        Class<?> fieldType = retColumnModel.getFieldType();
+                        if (fieldType == String.class) {
+                            retColumnModel.setFieldValue(instanceRef.get(), (String) columnValue);
+                        } else if (fieldType == boolean.class || fieldType == Boolean.class) {
+                            retColumnModel.setFieldValue(instanceRef.get(), (Boolean) columnValue);
+                        }
+                        if (fieldType == java.util.Date.class) {
+                            int columnTypeOfMetadata = columnMetadata.getColumnType();
+                            switch (columnTypeOfMetadata) {
+                                case Types.DATE:
+                                    retColumnModel.setFieldValue(instanceRef.get(), transferDate((java.sql.Date) columnValue));
+                                    break;
+                                case Types.TIME:
+                                    retColumnModel.setFieldValue(instanceRef.get(), transferTime((java.sql.Time) columnValue));
+                                    break;
+                                case Types.TIMESTAMP:
+                                    retColumnModel.setFieldValue(instanceRef.get(), transferTimestamp((java.sql.Timestamp) columnValue));
+                                    break;
+                                default:
+                                    retColumnModel.setFieldValue(instanceRef.get(), columnValue);
+                                    break;
+                            }
+                        } else {
+                            retColumnModel.setFieldValue(instanceRef.get(), columnValue);
+                        }
+                    }
+                });
+                retObjListRef.get().add(instanceRef.get());
+            });
+            retObjList = retObjListRef.get();
+        }
+        return retObjList;
+    }
+
+    public static QueryRetClassModel getClassQueryRetModel(Class<?> klass) throws NullPointerException, SQLite3MappingException {
+        if (klass == null) {
+            throw new NullPointerException();
+        }
+        String klassName = klass.getName();
+        QueryRetClassModel retClassModel = QUERY_RET_CLASS_MAP.get(klassName);
+        if (retClassModel == null) {
+            synchronized (SQLite3Utils.class) {
+                retClassModel = QUERY_RET_CLASS_MAP.get(klassName);
+                if (retClassModel == null) {
+                    try {
+                        Field[] fields = klass.getDeclaredFields();
+                        if (fields.length == 0) {
+                            throw new SQLite3MappingException(String.format("class[%s] has no declared fields", klassName));
+                        }
+                        Map<String, QueryRetColumnModel> retColumnModelMap = new HashMap<>();
+                        for (Field field: fields) {
+                            String fieldName = field.getName();
+                            SQLite3Column columnAnnotation = field.getAnnotation(SQLite3Column.class);
+                            if (columnAnnotation != null) {
+                                String columnName = columnAnnotation.columnName().trim();
+                                if (columnName.isEmpty()) {
+                                    throw new SQLite3MappingException(String.format(
+                                            "class[%s] field [%s] has @SQLite3Column annotation, but columnName is empty"
+                                            , klassName, fieldName));
+                                }
+                                QueryRetColumnModel retColumnModel = new QueryRetColumnModel();
+                                retColumnModel.setKlassName(klassName);
+                                retColumnModel.setColumnName(columnName);
+                                retColumnModel.setField(field);
+                                retColumnModel.setFieldName(fieldName);
+                                retColumnModel.setFieldType(field.getType());
+                                retColumnModelMap.put(columnName, retColumnModel);
+                            }
+                        }
+                        if (retColumnModelMap.isEmpty()) {
+                            throw new SQLite3MappingException(String.format("class[%s] has no field with annotation: @SQLite3Column", klassName));
+                        }
+                        retClassModel = new QueryRetClassModel();
+                        retClassModel.setKlass(klass);
+                        retClassModel.setRetColumnModelMap(retColumnModelMap);
+                        QUERY_RET_CLASS_MAP.put(klassName, retClassModel);
+                    } catch (SecurityException exception) {
+                        throw new SQLite3MappingException(String.format("visit class[%s] fields failed.", klassName), exception);
+                    } catch (Throwable throwable) {
+                        if (throwable instanceof SQLite3MappingException) {
+                            throw (SQLite3MappingException) throwable;
+                        }
+                        throw new SQLite3MappingException(throwable);
+                    }
+                }
+            }
+        }
+        return retClassModel;
+    }
 
     public static TableModel getClassTableModel(Class<?> klass) throws NullPointerException, SQLite3MappingException {
         if (klass == null) {
@@ -264,6 +378,15 @@ public class SQLite3Utils {
                     case Types.VARBINARY:
                     case Types.LONGVARBINARY:
                         columnValue = resultSet.getBytes(columnLabel);
+                        break;
+                    case Types.CLOB:
+                        columnValue = resultSet.getClob(columnLabel);
+                        break;
+                    case Types.NCLOB:
+                        columnValue = resultSet.getNClob(columnLabel);
+                        break;
+                    case Types.BLOB:
+                        columnValue = resultSet.getBlob(columnLabel);
                         break;
                     default:
                         columnValue = resultSet.getObject(columnLabel);

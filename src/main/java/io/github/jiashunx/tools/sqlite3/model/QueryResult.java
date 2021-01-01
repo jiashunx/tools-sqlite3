@@ -10,18 +10,18 @@ import java.util.Objects;
 public class QueryResult {
 
     private final Map<String, ColumnMetadata> columnMetadataMap;
-    private final List<Map<String, Object>> resultList;
+    private final List<Map<String, Object>> retMapList;
 
-    public QueryResult(Map<String, ColumnMetadata> columnMetadataMap, List<Map<String, Object>> resultList) {
+    public QueryResult(Map<String, ColumnMetadata> columnMetadataMap, List<Map<String, Object>> retMapList) {
         this.columnMetadataMap = Objects.requireNonNull(columnMetadataMap);
-        this.resultList = resultList;
+        this.retMapList = retMapList;
     }
 
     public Map<String, ColumnMetadata> getColumnMetadataMap() {
         return columnMetadataMap;
     }
 
-    public List<Map<String, Object>> getResultList() {
-        return resultList;
+    public List<Map<String, Object>> getRetMapList() {
+        return retMapList;
     }
 }
