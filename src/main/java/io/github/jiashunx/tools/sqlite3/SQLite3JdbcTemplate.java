@@ -213,14 +213,16 @@ public class SQLite3JdbcTemplate {
     }
 
     public boolean isTableExists(String tableName) throws SQLite3SQLException {
-        try {
-            return queryForInt(String.format("SELECT COUNT(1) FROM %s LIMIT 1", tableName)) >= 0;
-        } catch (SQLite3SQLException exception) {
-            if (logger.isErrorEnabled()) {
-                logger.error(String.format("query table [%s] existence failed.", tableName), exception);
-            }
+        return queryForInt("SELECT COUNT(1) FROM sqlite_master M WHERE M.type='table' AND M.name=?", statement -> {
+            statement.setString(1, tableName);
+        }) == 1;
+    }
+
+    public int queryTableRowCount(String tableName) throws SQLite3SQLException {
+        if (!isTableExists(tableName)) {
+            return 0;
         }
-        return false;
+        return queryForInt("SELECT COUNT(1) FROM " + tableName);
     }
 
     public boolean queryForBoolean(String sql) throws SQLite3SQLException {
