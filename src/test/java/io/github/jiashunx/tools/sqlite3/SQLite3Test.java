@@ -19,7 +19,7 @@ public class SQLite3Test {
      * sqlite数据库连接池并发测试
      */
     public static void main(String[] args) throws InterruptedException {
-        SQLite3JdbcTemplate jdbcTemplate = new SQLite3JdbcTemplate(SQLite3ConnectionManager.getConnectionPool("concurrency.db"));
+        SQLite3JdbcTemplate jdbcTemplate = new SQLite3JdbcTemplate(SQLite3ConnectionManager.getConnectionPool("test/concurrency.db"));
         boolean table1Exists = jdbcTemplate.isTableExists("TABLE_1");
         logger.info("TABLE_1 exists ? {}", table1Exists);
         if (table1Exists) {

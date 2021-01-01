@@ -4,8 +4,11 @@ import io.github.jiashunx.tools.sqlite3.connection.SQLite3Connection;
 import io.github.jiashunx.tools.sqlite3.connection.SQLite3ConnectionManager;
 import io.github.jiashunx.tools.sqlite3.connection.SQLite3ConnectionPool;
 import io.github.jiashunx.tools.sqlite3.connection.SQLite3PreparedStatement;
+import io.github.jiashunx.tools.sqlite3.exception.SQLite3MappingException;
 import io.github.jiashunx.tools.sqlite3.exception.SQLite3SQLException;
 import io.github.jiashunx.tools.sqlite3.model.QueryResult;
+import io.github.jiashunx.tools.sqlite3.model.TableColumnModel;
+import io.github.jiashunx.tools.sqlite3.model.TableModel;
 import io.github.jiashunx.tools.sqlite3.util.SQLite3Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,6 +110,41 @@ public class SQLite3JdbcTemplate {
 
 
     /********************************************* ↓ 通用API ↓ *********************************************/
+
+    public int insert(Object object) throws SQLite3SQLException, SQLite3MappingException {
+        List<Object> objectList = new ArrayList<>(1);
+        objectList.add(object);
+        return batchInsert(objectList);
+    }
+
+    public int batchInsert(List<?> objList) throws SQLite3SQLException, SQLite3MappingException {
+        List<?> $objList = Objects.requireNonNull(objList);
+        if (!$objList.isEmpty()) {
+            List<String> sqlList = new ArrayList<>();
+            List<Consumer<SQLite3PreparedStatement>> consumerList = new ArrayList<>();
+            $objList.forEach(object -> {
+                Object $object = Objects.requireNonNull(object);
+                Class<?> objClass = $object.getClass();
+                TableModel tableModel = SQLite3Utils.getClassTableModel(objClass);
+                sqlList.add(tableModel.getInsertSQL());
+                consumerList.add(statement -> {
+                    List<TableColumnModel> columnModelList = tableModel.getColumnModelList();
+                    for (int index = 0, size = columnModelList.size(); index < size; index++) {
+                        TableColumnModel columnModel = columnModelList.get(index);
+                        int insertIndex = index + 1;
+                        if (columnModel.getFieldType() == String.class) {
+                            statement.setString(insertIndex, (String) columnModel.getFieldValue($object));
+                        }
+                        // TODO 补充其他类型
+                    }
+                });
+            });
+            batchUpdate(sqlList.toArray(new String[0]), (index, statement) -> {
+                consumerList.get(index).accept(statement);
+            });
+        }
+        return 0;
+    }
 
     public int[] batchUpdate(String[] sqlArr) throws SQLite3SQLException {
         return batchUpdate(sqlArr, (index, statement) -> {});
