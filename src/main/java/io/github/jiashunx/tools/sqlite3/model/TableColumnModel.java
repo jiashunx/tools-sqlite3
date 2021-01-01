@@ -13,7 +13,6 @@ public class TableColumnModel {
     private String tableName;
     private boolean idColumn;
     private String columnName;
-    private int columnType;
     private String fieldName;
     private Class<?> fieldType;
     private Field field;
@@ -58,14 +57,6 @@ public class TableColumnModel {
 
     public void setColumnName(String columnName) {
         this.columnName = columnName;
-    }
-
-    public int getColumnType() {
-        return columnType;
-    }
-
-    public void setColumnType(int columnType) {
-        this.columnType = columnType;
     }
 
     public String getFieldName() {

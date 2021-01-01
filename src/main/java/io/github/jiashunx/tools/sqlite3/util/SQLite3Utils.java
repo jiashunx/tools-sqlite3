@@ -76,7 +76,6 @@ public class SQLite3Utils {
                                 columnModel.setKlassName(klassName);
                                 columnModel.setTableName(tableName);
                                 columnModel.setColumnName(columnName);
-                                columnModel.setColumnType(0);
                                 columnModel.setField(field);
                                 columnModel.setFieldName(fieldName);
                                 columnModel.setFieldType(field.getType());
