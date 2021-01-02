@@ -9,8 +9,7 @@ import io.github.jiashunx.tools.sqlite3.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
-import java.io.Reader;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.sql.*;
@@ -77,6 +76,8 @@ public class SQLite3Utils {
                                     retColumnModel.setFieldValue(instanceRef.get(), columnValue);
                                     break;
                             }
+                        } else if (fieldType == BigDecimal.class) {
+                            retColumnModel.setFieldValue(instanceRef.get(), BigDecimal.valueOf(Double.parseDouble(String.valueOf(columnValue))));
                         } else {
                             retColumnModel.setFieldValue(instanceRef.get(), columnValue);
                         }
@@ -292,21 +293,20 @@ public class SQLite3Utils {
                 } else if (fieldType == Clob.class) {
                     statement.setClob(insertIndex, (Clob) value);
                 } else if (fieldType == java.util.Date.class) {
-                    switch (columnMetadata.getColumnType()) {
-                        case Types.DATE:
+                    switch (columnMetadata.getColumnTypeName()) {
+                        case "DATE":
                             statement.setDate(insertIndex, transferToSQLDate((java.util.Date) value));
                             break;
-                        case Types.TIME:
+                        case "TIME":
                             statement.setTime(insertIndex, transferToSQLTime((java.util.Date) value));
                             break;
-                        case Types.TIMESTAMP:
+                        case "TIMESTAMP":
                             statement.setTimestamp(insertIndex, transferToSQLTimestamp((java.util.Date) value));
                             break;
                         default:
                             statement.setObject(insertIndex, value);
                             break;
                     }
-                    statement.setDate(insertIndex, (java.sql.Date) value);
                 } else if (fieldType == java.sql.Date.class) {
                     statement.setDate(insertIndex, (java.sql.Date) value);
                 } else if (fieldType == java.sql.Time.class) {
@@ -333,60 +333,76 @@ public class SQLite3Utils {
                 ColumnMetadata columnMetadata = entry.getValue();
                 String columnLabel = columnMetadata.getColumnLabel();
                 Object columnValue = null;
-                switch (columnMetadata.getColumnType()) {
-                    case Types.BIT:
+                switch (columnMetadata.getColumnTypeName()) {
+                    case "BOOLEAN":
                         columnValue = resultSet.getBoolean(columnLabel);
                         break;
-                    case Types.TINYINT:
+                    case "BIT":
+                        columnValue = resultSet.getBoolean(columnLabel);
+                        break;
+                    case "TINYINT":
                         columnValue = resultSet.getByte(columnLabel);
                         break;
-                    case Types.SMALLINT:
+                    case "SMALLINT":
                         columnValue = resultSet.getShort(columnLabel);
                         break;
-                    case Types.INTEGER:
+                    case "INTEGER":
                         columnValue = resultSet.getInt(columnLabel);
                         break;
-                    case Types.BIGINT:
+                    case "BIGINT":
                         columnValue = resultSet.getLong(columnLabel);
                         break;
-                    case Types.FLOAT:
+                    case "FLOAT":
                         columnValue = resultSet.getFloat(columnLabel);
                         break;
-                    case Types.REAL:
-                    case Types.DOUBLE:
+                    case "REAL":
+                    case "DOUBLE":
                         columnValue = resultSet.getDouble(columnLabel);
                         break;
-                    case Types.NUMERIC:
-                    case Types.DECIMAL:
+                    case "NUMERIC":
+                    case "DECIMAL":
                         columnValue = resultSet.getBigDecimal(columnLabel);
                         break;
-                    case Types.CHAR:
-                    case Types.VARCHAR:
-                    case Types.LONGVARCHAR:
+                    case "CHAR":
+                    case "VARCHAR":
+                    case "LONGVARCHAR":
+                    case "NCHAR":
+                    case "NVARCHAR":
+                    case "LONGNVARCHAR":
                         columnValue = resultSet.getString(columnLabel);
                         break;
-                    case Types.DATE:
+                    case "DATE":
                         columnValue = resultSet.getDate(columnLabel);
                         break;
-                    case Types.TIME:
+                    case "TIME":
                         columnValue = resultSet.getTime(columnLabel);
                         break;
-                    case Types.TIMESTAMP:
+                    case "TIMESTAMP":
                         columnValue = resultSet.getTimestamp(columnLabel);
                         break;
-                    case Types.BINARY:
-                    case Types.VARBINARY:
-                    case Types.LONGVARBINARY:
+                    case "BINARY":
+                    case "VARBINARY":
+                    case "LONGVARBINARY":
                         columnValue = resultSet.getBytes(columnLabel);
                         break;
-                    case Types.CLOB:
-                        columnValue = resultSet.getClob(columnLabel);
+                    case "CLOB":
+                    case "NCLOB":
+                        columnValue = resultSet.getObject(columnLabel);
                         break;
-                    case Types.NCLOB:
-                        columnValue = resultSet.getNClob(columnLabel);
-                        break;
-                    case Types.BLOB:
-                        columnValue = resultSet.getBlob(columnLabel);
+                    case "BLOB":
+                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                        try (InputStream inputStream = resultSet.getBinaryStream(columnLabel);) {
+                            if (inputStream != null) {
+                                byte[] buffer = new byte[1024];
+                                int temp = 0;
+                                while ((temp = inputStream.read(buffer)) >= 0) {
+                                    bos.write(buffer, 0, temp);
+                                }
+                            }
+                        } catch (Throwable throwable) {
+                            throw new SQLite3MappingException(String.format("read blob column[%s] failed.", columnName), throwable);
+                        }
+                        columnValue = bos.toByteArray();
                         break;
                     default:
                         columnValue = resultSet.getObject(columnLabel);

@@ -23,7 +23,7 @@ public class TableColumnModel {
             return field.get(object);
         } catch (Throwable throwable) {
             throw new SQLite3MappingException(String.format(
-                    "get field %s[class: %s, table: %s] value failed.", fieldName, klassName, tableName));
+                    "get field %s[class: %s, table: %s] value failed.", fieldName, klassName, tableName), throwable);
         }
     }
 

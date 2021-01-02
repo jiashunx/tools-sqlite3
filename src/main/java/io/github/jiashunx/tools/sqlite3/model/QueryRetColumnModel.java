@@ -21,7 +21,7 @@ public class QueryRetColumnModel {
             field.set(object, value);
         } catch (Throwable throwable) {
             throw new SQLite3MappingException(String.format(
-                    "set class[%s] field[%s] value faile.", klassName, fieldName));
+                    "set class[%s] field[%s] value faile.", klassName, fieldName), throwable);
         }
     }
 
