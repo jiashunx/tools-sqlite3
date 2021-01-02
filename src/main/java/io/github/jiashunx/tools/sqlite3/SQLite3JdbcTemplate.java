@@ -8,8 +8,6 @@ import io.github.jiashunx.tools.sqlite3.exception.SQLite3MappingException;
 import io.github.jiashunx.tools.sqlite3.exception.SQLite3SQLException;
 import io.github.jiashunx.tools.sqlite3.model.*;
 import io.github.jiashunx.tools.sqlite3.util.SQLite3Utils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.*;
@@ -21,8 +19,6 @@ import java.util.function.Function;
  * @author jiashunx
  */
 public class SQLite3JdbcTemplate {
-
-    private static final Logger logger = LoggerFactory.getLogger(SQLite3JdbcTemplate.class);
 
     private static final Consumer<SQLite3PreparedStatement> PREPARED_STATEMENT_CONSUMER = statement -> {};
 
