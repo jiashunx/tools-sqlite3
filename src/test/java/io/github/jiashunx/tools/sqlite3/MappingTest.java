@@ -2,7 +2,10 @@ package io.github.jiashunx.tools.sqlite3;
 
 import io.github.jiashunx.tools.sqlite3.connection.SQLite3ConnectionManager;
 
+import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -47,5 +50,47 @@ public class MappingTest {
 
         List<MyEntity> myEntityList = jdbcTemplate0.queryForList("SELECT * FROM MY_TABLE", MyEntity.class);
         System.out.println(myEntityList.size());
+
+        String tableName2 = "MY_TABLE2";
+        boolean table2Exists = jdbcTemplate0.isTableExists(tableName2);
+        if (table2Exists) {
+            jdbcTemplate0.executeUpdate("DROP TABLE MY_TABLE2");
+        }
+        String createTableSQL =
+                "CREATE TABLE MY_TABLE2(" +
+                    "    ID VARCHAR," +
+                    "    VARCHAR VARCHAR," +
+                    "    NVARCHAR NVARCHAR," +
+                    "    INTEGER INTEGER," +
+                    "    TEXT TEXT," +
+                    "    FLOAT FLOAT," +
+                    "    BLOB BLOB," +
+                    "    CLOB CLOB," +
+                    "    BOOLEAN BOOLEAN," +
+                    "    NUMERIC NUMERIC(10,5)," +
+                    "    DATE DATE," +
+                    "    TIME TIME," +
+                    "    TIMESTAMP TIMESTAMP" +
+                    ")";
+        jdbcTemplate0.executeUpdate(createTableSQL);
+        MyEntity2 entity2 = new MyEntity2();
+        entity2.setId(UUID.randomUUID().toString());
+        entity2.setmVARCHAR("varchar,hhh");
+        entity2.setmNVARCHAR("nvarchar 哈哈哈");
+        entity2.setmINTEGER(10);
+        entity2.setmTEXT("this is a long text.");
+        entity2.setmFLOAT(1.25f);
+        entity2.setmBLOB("hhhhhhhhhhhhhhhhhhhhhhh".getBytes());
+        entity2.setmBOOLEAN(true);
+        entity2.setmNUMERIC(BigDecimal.TEN);
+        entity2.setmDATE(new Date());
+        entity2.setmTIME(new Date());
+        entity2.setmTIMESTAMP(new Date());
+        jdbcTemplate0.insert(entity2);
+        int table2RowCount = jdbcTemplate0.queryTableRowCount(tableName2);
+        System.out.println("table2 row count: " + table2RowCount);
+        List<Map<String, Object>> entity2MapList = jdbcTemplate0.queryForList("SELECT * FROM MY_TABLE2");
+        List<MyEntity2> entity2List = jdbcTemplate0.queryForList("SELECT * FROM MY_TABLE2", MyEntity2.class);
+        System.out.println(entity2List.size());
     }
 }
