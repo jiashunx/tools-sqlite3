@@ -10,8 +10,5 @@ import java.lang.annotation.*;
 @Documented
 @Inherited
 public @interface SQLite3Table {
-    /**
-     * table name.
-     */
     String tableName();
 }

@@ -10,8 +10,5 @@ import java.lang.annotation.*;
 @Documented
 @Inherited
 public @interface SQLite3Column {
-    /**
-     * column name
-     */
     String columnName();
 }

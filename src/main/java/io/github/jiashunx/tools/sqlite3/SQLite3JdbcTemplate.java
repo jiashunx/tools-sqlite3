@@ -39,10 +39,6 @@ public class SQLite3JdbcTemplate {
         return connectionPool;
     }
 
-
-
-    /********************************************* ↓ 基础API ↓ *********************************************/
-
     public void query(Consumer<Connection> consumer) {
         query(getConnectionPool().fetchReadConnection(), consumer);
     }
@@ -98,12 +94,6 @@ public class SQLite3JdbcTemplate {
             }
         });
     }
-
-    /********************************************* ↑ 基础API ↑ *********************************************/
-
-
-
-    /********************************************* ↓ 通用API ↓ *********************************************/
 
     public <R> R queryForObj(String sql, Class<R> klass) throws SQLite3SQLException, SQLite3MappingException {
         return queryForObj(sql, statement -> {}, klass);
@@ -431,8 +421,5 @@ public class SQLite3JdbcTemplate {
             }
         });
     }
-
-    /********************************************* ↑ 通用API ↑ *********************************************/
-
 
 }
