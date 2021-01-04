@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<table-metadata id="group id">
+    <!-- 数据查询SQL -->
+    <dql>
+        <sql id="id" desc="desc" class="class name">
+            <![CDATA[
+                SELECT * FROM TABLE_NAME;
+            ]]>
+        </sql>
+    </dql>
+    <!-- 数据操作SQL -->
+    <dml>
+        <sql id="id" desc="desc">
+            <![CDATA[
+                DELETE FROM TABLE_NAME WHERE XXX;
+            ]]>
+        </sql>
+    </dml>
+    <!-- 数据定义SQL -->
+    <ddl>
+        <table name="TABLE_NAME">
+            <![CDATA[
+                CREATE TABLE TABLE_NAME(COLUMN_NAME COLUMN_TYPE);
+            ]]>
+        </table>
+        <view name="VIEW_NAME" temporary="true">
+            <!-- create view as select * from table where condition. -->
+            <![CDATA[
+                SELECT * FROM TABLE_NAME
+            ]]>
+        </view>
+    </ddl>
+</table-metadata>
