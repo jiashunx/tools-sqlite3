@@ -19,9 +19,8 @@
     <!-- 数据定义SQL -->
     <ddl>
         <table name="TABLE_NAME">
-            <![CDATA[
-                CREATE TABLE TABLE_NAME(COLUMN_NAME COLUMN_TYPE);
-            ]]>
+            <column name="COLUMN_NAME" type="COLUMN_TYPE" primary="true" />
+            <column name="COLUMN_NAME" type="COLUMN_TYPE" />
         </table>
         <view name="VIEW_NAME" temporary="true">
             <!-- create view as select * from table where condition. -->
