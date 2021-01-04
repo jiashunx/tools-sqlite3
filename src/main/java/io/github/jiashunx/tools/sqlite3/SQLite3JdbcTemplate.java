@@ -293,6 +293,24 @@ public class SQLite3JdbcTemplate {
         }) == 1;
     }
 
+    public String getTableDefineSQL(String tableName) throws SQLite3SQLException {
+        if (isTableExists(tableName)) {
+            return queryForString("SELECT M.sql FROM sqlite_master M WHERE M.type='table' AND M.name=?", statement -> {
+                statement.setString(1, tableName);
+            });
+        }
+        return null;
+    }
+
+    public String getViewDefineSQL(String viewName) throws SQLite3SQLException {
+        if (isViewExists(viewName)) {
+            return queryForString("SELECT M.sql FROM sqlite_master M WHERE M.type='view' AND M.name=?", statement -> {
+                statement.setString(1, viewName);
+            });
+        }
+        return null;
+    }
+
     public int queryTableRowCount(String tableName) throws SQLite3SQLException {
         if (!isTableExists(tableName)) {
             return 0;

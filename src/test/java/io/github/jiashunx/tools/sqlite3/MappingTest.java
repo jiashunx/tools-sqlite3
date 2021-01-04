@@ -100,5 +100,7 @@ public class MappingTest {
                 + jdbcTemplate0.isViewExists("MY_TABLE2_VIEW"));
         System.out.println("is view MY_TABLE2_VIEW exists ? "
                 + jdbcTemplate0.isViewExists("MY_TABLE2_VIEW22"));
+        System.out.println(jdbcTemplate0.getTableDefineSQL("MY_TABLE2"));
+        System.out.println(jdbcTemplate0.getViewDefineSQL("MY_TABLE2_VIEW"));
     }
 }
