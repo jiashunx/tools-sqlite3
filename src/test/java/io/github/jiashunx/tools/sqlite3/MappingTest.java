@@ -92,5 +92,13 @@ public class MappingTest {
         List<Map<String, Object>> entity2MapList = jdbcTemplate0.queryForList("SELECT * FROM MY_TABLE2");
         List<MyEntity2> entity2List = jdbcTemplate0.queryForList("SELECT * FROM MY_TABLE2", MyEntity2.class);
         System.out.println(entity2List.size());
+        System.out.println("MY_TABLE2 contains column: TIMESTAMP ?"
+                + jdbcTemplate0.isTableColumnExists("MY_TABLE2", "TIMESTAMP"));
+        System.out.println("MY_TABLE2 contains column: TIMESTAMPXX ?"
+                + jdbcTemplate0.isTableColumnExists("MY_TABLE2", "TIMESTAMPXX"));
+        System.out.println("is view MY_TABLE2_VIEW exists ? "
+                + jdbcTemplate0.isViewExists("MY_TABLE2_VIEW"));
+        System.out.println("is view MY_TABLE2_VIEW exists ? "
+                + jdbcTemplate0.isViewExists("MY_TABLE2_VIEW22"));
     }
 }
