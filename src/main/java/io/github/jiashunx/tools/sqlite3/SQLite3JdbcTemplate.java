@@ -106,7 +106,7 @@ public class SQLite3JdbcTemplate {
             return null;
         }
         if (retList.size() > 1) {
-            throw new SQLite3SQLException("query result contains more than one column");
+            throw new SQLite3SQLException(String.format("query result contains more than one column, sql: %s", sql));
         }
         return retList.get(0);
     }
@@ -381,10 +381,10 @@ public class SQLite3JdbcTemplate {
     public Object queryForOneValue(String sql, Consumer<SQLite3PreparedStatement> consumer) throws SQLite3SQLException {
         Map<String, Object> resultMap = queryForMap(sql, consumer);
         if (resultMap == null || resultMap.isEmpty()) {
-            throw new SQLite3SQLException("query result is null");
+            throw new SQLite3SQLException(String.format("query result is null, sql: %s", sql));
         }
         if (resultMap.size() > 1) {
-            throw new SQLite3SQLException("query result contains more than one column");
+            throw new SQLite3SQLException(String.format("query result contains more than one column, sql: %s", sql));
         }
         return resultMap.get(resultMap.keySet().toArray(new String[0])[0]);
     }
@@ -400,7 +400,7 @@ public class SQLite3JdbcTemplate {
             if (mapList.size() == 1) {
                 return mapList.get(0);
             }
-            throw new SQLite3SQLException("query result contains more than one row");
+            throw new SQLite3SQLException(String.format("query result contains more than one row, sql: %s", sql));
         }
         return retMap;
     }
