@@ -59,7 +59,7 @@ public class SQLPackage {
         dml.put(sql.getId(), sql);
     }
 
-    public void addColumn(Column column) {
+    public void addColumnDDL(Column column) {
         tableDDL.computeIfAbsent(column.getTableName(), k -> new ArrayList<>()).add(column);
     }
 

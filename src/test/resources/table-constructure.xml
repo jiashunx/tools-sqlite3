@@ -26,6 +26,7 @@
             <!-- create view as select * from table where condition. -->
             <![CDATA[
                 SELECT * FROM TABLE_NAME
+                WHERE A=X
             ]]>
         </view>
     </ddl>
