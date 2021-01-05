@@ -20,7 +20,10 @@
 
    - demo参考：[SQLite3Test](./src/test/java/io/github/jiashunx/tools/sqlite3/SQLite3Test.java)，[MappingTest](./src/test/java/io/github/jiashunx/tools/sqlite3/MappingTest.java)
 
-- 版本清单（最新版本：<b>1.0.0</b>）：
+- 版本清单（最新版本：<b>1.1.0</b>）：
 
    - version 1.0.0 (released)
       - feature: 实现主要功能
+   - version 1.1.0 (released)
+      - feature: 增加对sqlite数据结构管理的工具类及模型（便于sqlite数据库表及视图的初始化）
+      - refactor: SQLite3JdbcTemplate增加部分通用查询方法
