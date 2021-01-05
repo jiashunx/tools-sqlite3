@@ -3,6 +3,7 @@ package io.github.jiashunx.tools.sqlite3.table;
 import org.sqlite.util.StringUtils;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author jiashunx
@@ -15,26 +16,34 @@ public class SQLPackage {
     /**
      * key - sqlid
      */
-    private final Map<String, SQL> dql = new HashMap<>();
+    private final Map<String, SQL> dql = new ConcurrentHashMap<>();
     /**
      * key - sqlid
      */
-    private final Map<String, SQL> dml = new HashMap<>();
+    private final Map<String, SQL> dml = new ConcurrentHashMap<>();
     /**
      * key - tableName
      */
-    private final Map<String, List<Column>> columnDDL = new HashMap<>();
+    private final Map<String, List<Column>> columnDDL = new ConcurrentHashMap<>();
     /**
      * key - tableName_columnName
      */
-    private final Map<String, Column> columnMap = new HashMap<>();
+    private final Map<String, Column> columnMap = new ConcurrentHashMap<>();
     /**
      * key - viewName
      */
-    private final Map<String, View> viewDDL = new HashMap<>();
+    private final Map<String, View> viewDDL = new ConcurrentHashMap<>();
 
     public SQLPackage(String groupId) {
         this.groupId = Objects.requireNonNull(groupId);
+    }
+
+    public List<String> getTableNames() {
+        return new ArrayList<>(columnDDL.keySet());
+    }
+
+    public List<String> getViewNames() {
+        return new ArrayList<>(viewDDL.keySet());
     }
 
     public String getTableDefineSQL(String tableName) {
@@ -71,6 +80,7 @@ public class SQLPackage {
         if (view.isTemporary()) {
             builder.append(" TEMPORARY ");
         }
+        builder.append(" VIEW ");
         builder.append(viewName).append(" AS ").append(view.getContent());
         return builder.toString();
     }

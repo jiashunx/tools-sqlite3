@@ -7,7 +7,10 @@ import io.github.jiashunx.tools.sqlite3.connection.SQLite3PreparedStatement;
 import io.github.jiashunx.tools.sqlite3.exception.SQLite3MappingException;
 import io.github.jiashunx.tools.sqlite3.exception.SQLite3SQLException;
 import io.github.jiashunx.tools.sqlite3.model.*;
+import io.github.jiashunx.tools.sqlite3.table.SQLPackage;
 import io.github.jiashunx.tools.sqlite3.util.SQLite3Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.*;
@@ -19,6 +22,8 @@ import java.util.function.Function;
  * @author jiashunx
  */
 public class SQLite3JdbcTemplate {
+
+    private static final Logger logger = LoggerFactory.getLogger(SQLite3JdbcTemplate.class);
 
     private static final Consumer<SQLite3PreparedStatement> PREPARED_STATEMENT_CONSUMER = statement -> {};
 
@@ -309,6 +314,44 @@ public class SQLite3JdbcTemplate {
             });
         }
         return null;
+    }
+
+    public void initSQLPackage(SQLPackage sqlPackage) throws NullPointerException, SQLite3SQLException {
+        if (sqlPackage == null) {
+            throw new NullPointerException();
+        }
+        try {
+            sqlPackage.getTableNames().forEach(tableName -> {
+                if (!isTableExists(tableName)) {
+                    String tableDefineSQL = sqlPackage.getTableDefineSQL(tableName);
+                    if (logger.isWarnEnabled()) {
+                        logger.warn("table[{}] no exists, prepare create it, sql: {}", tableName, tableDefineSQL);
+                    }
+                    executeUpdate(tableDefineSQL);
+                }
+                sqlPackage.getColumns(tableName).forEach(column -> {
+                    String columnName = column.getColumnName();
+                    if (!isTableColumnExists(tableName, columnName)) {
+                        String columnDefineSQL = sqlPackage.getColumnDefineSQL(tableName, columnName);
+                        if (logger.isWarnEnabled()) {
+                            logger.warn("table[{}] column[{}] not exists, prepare create it, sql: {}", tableName, columnName, columnDefineSQL);
+                        }
+                        executeUpdate(columnDefineSQL);
+                    }
+                });
+            });
+            sqlPackage.getViewNames().forEach(viewName -> {
+                if (!isViewExists(viewName)) {
+                    String viewDefineSQL = sqlPackage.getViewDefineSQL(viewName);
+                    if (logger.isWarnEnabled()) {
+                        logger.warn("view[{}] not exists, prepare create it, sql: {}", viewName, viewDefineSQL);
+                    }
+                    executeUpdate(viewDefineSQL);
+                }
+            });
+        } catch (Throwable throwable) {
+            throw new SQLite3SQLException(String.format("init sql package failed, groupId: %s", sqlPackage.getGroupId()), throwable);
+        }
     }
 
     public int queryTableRowCount(String tableName) throws SQLite3SQLException {
