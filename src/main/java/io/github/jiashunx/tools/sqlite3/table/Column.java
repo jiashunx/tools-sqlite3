@@ -5,14 +5,14 @@ import java.util.Objects;
 /**
  * @author jiashunx
  */
-public class ColumnMetadata {
+public class Column {
 
     private final String tableName;
     private final String columnName;
     private final String columnType;
     private final boolean primary;
 
-    public ColumnMetadata(String tableName, String columnName, String columnType, boolean primary) {
+    public Column(String tableName, String columnName, String columnType, boolean primary) {
         this.tableName = Objects.requireNonNull(tableName);
         this.columnName = Objects.requireNonNull(columnName);
         this.columnType = Objects.requireNonNull(columnType);

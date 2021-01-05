@@ -5,13 +5,13 @@ import java.util.Objects;
 /**
  * @author jiashunx
  */
-public class ViewMetadata {
+public class View {
 
     private final String viewName;
     private final boolean temporary;
     private final String content;
 
-    public ViewMetadata(String viewName, boolean temporary, String content) {
+    public View(String viewName, boolean temporary, String content) {
         this.viewName = Objects.requireNonNull(viewName);
         this.temporary = temporary;
         this.content = Objects.requireNonNull(content);

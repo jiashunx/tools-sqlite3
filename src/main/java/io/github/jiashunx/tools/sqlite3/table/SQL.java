@@ -5,17 +5,17 @@ import java.util.Objects;
 /**
  * @author jiashunx
  */
-public class SQLMetadata {
+public class SQL {
 
     private final String id;
     private final String name;
     private final String content;
 
-    public SQLMetadata(String id, String content) {
+    public SQL(String id, String content) {
         this(id, null, content);
     }
 
-    public SQLMetadata(String id, String name, String content) {
+    public SQL(String id, String name, String content) {
         this.id = Objects.requireNonNull(id);
         this.name = name;
         this.content = Objects.requireNonNull(content);
