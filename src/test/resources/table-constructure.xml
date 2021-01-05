@@ -19,8 +19,9 @@
     <!-- 数据定义SQL -->
     <ddl>
         <table name="TABLE_NAME">
-            <column name="COLUMN_NAME" type="COLUMN_TYPE" primary="true" />
-            <column name="COLUMN_NAME" type="COLUMN_TYPE" />
+            <column name="COLUMN_NAME1" type="COLUMN_TYPE1" primary="true" />
+            <column name="COLUMN_NAME2" type="COLUMN_TYPE2" primary="false" />
+            <column name="COLUMN_NAME3" type="COLUMN_TYPE3" primary="true" />
         </table>
         <view name="VIEW_NAME" temporary="true">
             <!-- create view as select * from table where condition. -->
