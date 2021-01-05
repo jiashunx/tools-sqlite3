@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<table-metadata id="group id">
+    <!-- 数据查询SQL -->
+    <dql>
+        <sql id="00000000000001" desc="" class="io.github.jiashunx.tools.sqlite3.MyEntity3">
+            <![CDATA[
+                SELECT * FROM MY_TABLE3;
+            ]]>
+        </sql>
+    </dql>
+    <!-- 数据操作SQL -->
+    <dml>
+        <sql id="0000002" desc="">
+            <![CDATA[
+                DELETE FROM MY_TABLE3 WHERE ID=?
+            ]]>
+        </sql>
+    </dml>
+    <!-- 数据定义SQL -->
+    <ddl>
+        <table name="MY_TABLE3">
+            <column name="ID" type="VARCHAR" primary="true" />
+            <column name="VARCHAR" type="VARCHAR" />
+            <column name="NNNNNAME" type="VARCHAR" />
+            <column name="NVARCHAR" type="NVARCHAR" />
+            <column name="INTEGER" type="INTEGER" />
+            <column name="TEXT" type="TEXT" />
+            <column name="FLOAT" type="FLOAT" />
+            <column name="BLOB" type="BLOB" />
+            <column name="BOOLEAN" type="BOOLEAN" />
+            <column name="NUMERIC" type="NUMERIC" />
+            <column name="DATE" type="DATE" />
+            <column name="TIME" type="TIME" />
+            <column name="TIMESTAMP" type="TIMESTAMP" />
+        </table>
+        <view name="MY_TABLE3_VIEW" temporary="false">
+            <!-- create view as select * from table where condition. -->
+            <![CDATA[
+                SELECT * FROM MY_TABLE3
+                WHERE 1=1
+            ]]>
+        </view>
+    </ddl>
+</table-metadata>

@@ -17,4 +17,16 @@ public class SQLite3SQLHelperTest {
         Assert.assertNotNull(sqlPackage.getViewDefineSQL("VIEW_NAME"));
         Assert.assertNotNull(sqlPackage.getColumnDefineSQL("TABLE_NAME", "COLUMN_NAME2"));
     }
+
+    @Test
+    public void test2() {
+        SQLPackage sqlPackage = SQLite3SQLHelper.loadSQLPackageFromClasspath("unittest.xml");
+        Assert.assertNotNull(sqlPackage);
+        SQLite3JdbcTemplate jdbcTemplate = new SQLite3JdbcTemplate("test/test.db");
+        jdbcTemplate.initSQLPackage(sqlPackage);
+        Assert.assertTrue(jdbcTemplate.isTableExists("MY_TABLE3"));
+        Assert.assertTrue(jdbcTemplate.isViewExists("MY_TABLE3_VIEW"));
+        Assert.assertTrue(jdbcTemplate.isTableColumnExists("MY_TABLE3", "NNNNNAME"));
+    }
+
 }
