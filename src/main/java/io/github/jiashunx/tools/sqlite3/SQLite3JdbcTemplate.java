@@ -215,7 +215,7 @@ public class SQLite3JdbcTemplate {
         });
     }
 
-    public int batchInsert(String sql, int rowCount, BiConsumer<Integer, SQLite3PreparedStatement> consumer) throws SQLite3SQLException {
+    public int batchUpdate(String sql, int rowCount, BiConsumer<Integer, SQLite3PreparedStatement> consumer) throws SQLite3SQLException {
         return write(connection -> {
             int effectedRowCount = 0;
             SQLite3PreparedStatement statement = null;
@@ -236,10 +236,10 @@ public class SQLite3JdbcTemplate {
                     connection.rollback();
                 } catch (SQLException exception1) {
                     throw new SQLite3SQLException(String.format(
-                            "execute batch insert failed (rollback failed, reason: %s.), sql: %s"
+                            "execute batch update failed (rollback failed, reason: %s.), sql: %s"
                             , exception1.getMessage(), sql), exception);
                 }
-                throw new SQLite3SQLException(String.format("execute batch insert failed(rollback success), sql: %s", sql), exception);
+                throw new SQLite3SQLException(String.format("execute batch update failed(rollback success), sql: %s", sql), exception);
             } finally {
                 SQLite3Utils.close(statement);
             }
