@@ -298,6 +298,12 @@ public class SQLite3JdbcTemplate {
         }) == 1;
     }
 
+    public boolean isIndexExists(String indexName) throws SQLite3SQLException {
+        return queryForInt("SELECT COUNT(1) FROM sqlite_master M WHERE M.type='index' AND M.name=?", statement -> {
+            statement.setString(1, indexName);
+        }) == 1;
+    }
+
     public String getTableDefineSQL(String tableName) throws SQLite3SQLException {
         if (isTableExists(tableName)) {
             return queryForString("SELECT M.sql FROM sqlite_master M WHERE M.type='table' AND M.name=?", statement -> {
