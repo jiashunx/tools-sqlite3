@@ -355,6 +355,18 @@ public class SQLite3JdbcTemplate {
                     executeUpdate(viewDefineSQL);
                 }
             });
+            sqlPackage.getIndexTableNames().forEach(tableName -> {
+                sqlPackage.getIndexes(tableName).forEach(index -> {
+                    String indexName = index.getIndexName();
+                    if (!isIndexExists(indexName)) {
+                        String indexDefineSQL = sqlPackage.getIndexDefineSQL(tableName, indexName);
+                        if (logger.isWarnEnabled()) {
+                            logger.warn("table[{}] index[{}] not exists, prepare create it, sql: {}", tableName, indexName, indexDefineSQL);
+                        }
+                        executeUpdate(indexDefineSQL);
+                    }
+                });
+            });
         } catch (Throwable throwable) {
             throw new SQLite3SQLException(String.format("init sql package failed, groupId: %s", sqlPackage.getGroupId()), throwable);
         }
