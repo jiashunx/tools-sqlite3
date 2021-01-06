@@ -102,7 +102,7 @@ public class SQLPackage {
         if (column == null) {
             return null;
         }
-        return "ALTER TABLE ADD COLUMN " +
+        return "ALTER TABLE " + tableName + " ADD COLUMN " +
                 columnName +
                 " " +
                 column.getColumnType();
