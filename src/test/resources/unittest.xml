@@ -40,5 +40,9 @@
                 WHERE 1=1
             ]]>
         </view>
+        <index name="TABLE3_INDEX_NAME" table="MY_TABLE3" unique="true">
+            <column name="NNNNNAME" />
+            <column name="NVARCHAR" />
+        </index>
     </ddl>
 </table-metadata>

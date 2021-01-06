@@ -1,16 +1,15 @@
 package io.github.jiashunx.tools.sqlite3.util;
 
 import io.github.jiashunx.tools.sqlite3.exception.SQLite3SQLException;
-import io.github.jiashunx.tools.sqlite3.table.Column;
-import io.github.jiashunx.tools.sqlite3.table.SQL;
-import io.github.jiashunx.tools.sqlite3.table.SQLPackage;
-import io.github.jiashunx.tools.sqlite3.table.View;
+import io.github.jiashunx.tools.sqlite3.table.*;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -98,6 +97,22 @@ public class SQLite3SQLHelper {
                             boolean temporary = "true".equals(temporaryVal);
                             String content = viewElement.getText().replace("    ", "").replace("\n", " ");
                             sqlPackageRef.get().addViewDDL(new View(viewName, temporary, content));
+                        });
+                    });
+                    Optional.ofNullable(ddlElement.elements("index")).ifPresent(indexElements -> {
+                        indexElements.forEach(indexElement -> {
+                            String indexName = indexElement.attributeValue("name");
+                            String tableName = indexElement.attributeValue("table");
+                            String uniqueVal = indexElement.attributeValue("unique");
+                            boolean unique = "true".equals(uniqueVal);
+                            AtomicReference<List<String>> columnNamesRef = new AtomicReference(new ArrayList<>());
+                            Optional.ofNullable(indexElement.elements("column")).ifPresent(columnElements -> {
+                                columnElements.forEach(columnElement -> {
+                                    String columnName = columnElement.attributeValue("name");
+                                    columnNamesRef.get().add(columnName);
+                                });
+                            });
+                            sqlPackageRef.get().addIndexDDL(new Index(tableName, indexName, unique, columnNamesRef.get()));
                         });
                     });
                 });
