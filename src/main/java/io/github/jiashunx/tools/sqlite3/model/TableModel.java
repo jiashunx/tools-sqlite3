@@ -1,7 +1,10 @@
 package io.github.jiashunx.tools.sqlite3.model;
 
+import io.github.jiashunx.tools.sqlite3.exception.SQLite3MappingException;
+
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * @author jiashunx
@@ -67,12 +70,42 @@ public class TableModel {
         return builder.toString();
     }
 
+    public String getSelectAllSQL() {
+        return getSelectAllSQL(builder -> {});
+    }
+
+    public String getSelectAllSQL(Consumer<StringBuilder> consumer) {
+        StringBuilder builder = new StringBuilder("SELECT * FROM " + tableName + " ");
+        consumer.accept(builder);
+        return builder.toString();
+    }
+
     public String getSelectSQL() {
-        return "SELECT * FROM " + tableName + " WHERE " + idColumnModel.getColumnName() + "=?";
+        return getSelectSQL(builder -> {});
+    }
+
+    public String getSelectSQL(Consumer<StringBuilder> consumer) {
+        StringBuilder builder = new StringBuilder(getSelectAllSQL() + " WHERE " + idColumnModel.getColumnName() + "=? ");
+        consumer.accept(builder);
+        return builder.toString();
     }
 
     public String getDeleteSQL() {
-        return "DELETE FROM " + tableName + " WHERE " + idColumnModel.getColumnName() + "=?";
+        return getDeleteSQL(builder -> {});
+    }
+
+    public String getDeleteSQL(Consumer<StringBuilder> consumer) {
+        StringBuilder builder = new StringBuilder("DELETE FROM " + tableName + " WHERE " + idColumnModel.getColumnName() + "=? ");
+        consumer.accept(builder);
+        return builder.toString();
+    }
+
+    public Object newInstance() {
+        try {
+            return klass.newInstance();
+        } catch (Throwable throwable) {
+            throw new SQLite3MappingException(String.format("create class [%s] instance failed.", klassName), throwable);
+        }
     }
 
     public Class<?> getKlass() {
