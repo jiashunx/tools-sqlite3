@@ -67,6 +67,14 @@ public class TableModel {
         return builder.toString();
     }
 
+    public String getSelectSQL() {
+        return "SELECT * FROM " + tableName + " WHERE " + idColumnModel.getColumnName() + "=?";
+    }
+
+    public String getDeleteSQL() {
+        return "DELETE FROM " + tableName + " WHERE " + idColumnModel.getColumnName() + "=?";
+    }
+
     public Class<?> getKlass() {
         return klass;
     }
