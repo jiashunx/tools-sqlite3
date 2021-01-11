@@ -20,7 +20,7 @@
 
    - demo参考：[SQLite3Test](./src/test/java/io/github/jiashunx/tools/sqlite3/SQLite3Test.java)，[MappingTest](./src/test/java/io/github/jiashunx/tools/sqlite3/MappingTest.java)
 
-- 版本清单（最新版本：<b>1.1.2</b>）：
+- 版本清单（最新版本：<b>1.1.3</b>）：
 
    - version 1.0.0 (released)
       - feature: 实现主要功能
@@ -32,3 +32,5 @@
       - refactor: 调整SQLite3JdbcTemplate部分方法名称
    - version 1.1.2 (released)
       - fixbug: 修正添加表字段拼接sql的异常
+   - version 1.1.3 (released)
+      - feature: 增加针对实体的默认Service类，提供增删改查一条龙服务
