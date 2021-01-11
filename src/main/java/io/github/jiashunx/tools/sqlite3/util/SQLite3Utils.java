@@ -224,6 +224,7 @@ public class SQLite3Utils {
                         });
                         columnModelList.add(idColumnModel);
                         tableModel = new TableModel();
+                        tableModel.setKlass(klass);
                         tableModel.setKlassName(klassName);
                         tableModel.setTableName(tableName);
                         tableModel.setIdColumnModel(idColumnModel);

@@ -8,6 +8,10 @@ import java.util.Map;
  */
 public class TableModel {
     /**
+     * class对象.
+     */
+    private Class<?> klass;
+    /**
      * class名称.
      */
     private String klassName;
@@ -61,6 +65,14 @@ public class TableModel {
         builder.append(" WHERE ");
         builder.append(idColumnModel.getColumnName()).append("=?");
         return builder.toString();
+    }
+
+    public Class<?> getKlass() {
+        return klass;
+    }
+
+    public void setKlass(Class<?> klass) {
+        this.klass = klass;
     }
 
     public String getKlassName() {
