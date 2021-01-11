@@ -2,6 +2,7 @@ package io.github.jiashunx.tools.sqlite3.model;
 
 import io.github.jiashunx.tools.sqlite3.exception.SQLite3MappingException;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -105,6 +106,16 @@ public class TableModel {
             return klass.newInstance();
         } catch (Throwable throwable) {
             throw new SQLite3MappingException(String.format("create class [%s] instance failed.", klassName), throwable);
+        }
+    }
+
+    public Object getIdFieldValue(Object object) {
+        Field idField = idColumnModel.getField();
+        try {
+            idField.setAccessible(true);
+            return idField.get(object);
+        } catch (Throwable throwable) {
+            throw new SQLite3MappingException(String.format("get id field[%s] value faild.", idField), throwable);
         }
     }
 
