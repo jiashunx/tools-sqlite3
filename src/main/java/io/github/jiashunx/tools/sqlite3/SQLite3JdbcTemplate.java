@@ -73,8 +73,15 @@ public class SQLite3JdbcTemplate {
         });
     }
 
+    public SQLite3Connection getWriteConnection() {
+        if (isInTransactionModel()) {
+            return getTransactionConnection();
+        }
+        return getConnectionPool().fetchWriteConnection();
+    }
+
     public void write(Consumer<Connection> consumer) {
-        write(getConnectionPool().fetchWriteConnection(), consumer);
+        write(getWriteConnection(), consumer);
     }
 
     public void write(SQLite3Connection connection, Consumer<Connection> consumer) {
@@ -88,7 +95,7 @@ public class SQLite3JdbcTemplate {
     }
 
     public <R> R write(Function<Connection, R> function) {
-        return write(getConnectionPool().fetchWriteConnection(), function);
+        return write(getWriteConnection(), function);
     }
 
     public <R> R write(SQLite3Connection connection, Function<Connection, R> function) {
@@ -126,12 +133,26 @@ public class SQLite3JdbcTemplate {
         return SQLite3Utils.parseQueryResult(queryForResult(sql, consumer), klass);
     }
 
-    public void doTransaction(Consumer<Connection> consumer) throws SQLite3SQLException, SQLite3MappingException {
-        write(connection -> {
+    private static final ThreadLocal<Boolean> TRANSACTION_MODE = new ThreadLocal<>();
+    private static final ThreadLocal<SQLite3Connection> TRANSACTION_CONNECTION = new ThreadLocal<>();
+
+    public static boolean isInTransactionModel() {
+        return TRANSACTION_MODE.get() != null && TRANSACTION_MODE.get();
+    }
+
+    public static SQLite3Connection getTransactionConnection() {
+        return TRANSACTION_CONNECTION.get();
+    }
+
+    public void doTransaction(VoidFunc voidFunc) throws SQLite3SQLException, SQLite3MappingException {
+        SQLite3Connection sqLite3Connection = getWriteConnection();
+        TRANSACTION_MODE.set(true);
+        TRANSACTION_CONNECTION.set(sqLite3Connection);
+        write(sqLite3Connection, connection -> {
             try {
                 connection.setAutoCommit(false);
                 try {
-                    consumer.accept(connection);
+                    voidFunc.apply();
                 } catch (Throwable exception) {
                     throw new SQLite3SQLException("doTransaction failed", exception);
                 }
@@ -145,6 +166,9 @@ public class SQLite3JdbcTemplate {
                             , exception1.getMessage()), exception);
                 }
                 throw new SQLite3SQLException("doTransaction failed(rollback success)", exception);
+            } finally {
+                TRANSACTION_MODE.set(false);
+                TRANSACTION_CONNECTION.set(null);
             }
         });
     }
@@ -206,7 +230,9 @@ public class SQLite3JdbcTemplate {
             int[] effectedRowArr = new int[sqlArr.length];
             SQLite3PreparedStatement statement = null;
             try {
-                connection.setAutoCommit(false);
+                if (!isInTransactionModel()) {
+                    connection.setAutoCommit(false);
+                }
                 for (int index = 0; index < sqlArr.length; index++) {
                     String sql = sqlArr[index];
                     try {
@@ -222,7 +248,9 @@ public class SQLite3JdbcTemplate {
                         statement = null;
                     }
                 }
-                connection.commit();
+                if (!isInTransactionModel()) {
+                    connection.commit();
+                }
                 return effectedRowArr;
             } catch (Throwable exception) {
                 try {
@@ -244,7 +272,9 @@ public class SQLite3JdbcTemplate {
             int effectedRowCount = 0;
             SQLite3PreparedStatement statement = null;
             try {
-                connection.setAutoCommit(false);
+                if (!isInTransactionModel()) {
+                    connection.setAutoCommit(false);
+                }
                 statement = new SQLite3PreparedStatement(connection.prepareStatement(sql));
                 for (int i = 0; i < rowCount; i++) {
                     if (consumer != null) {
@@ -253,7 +283,9 @@ public class SQLite3JdbcTemplate {
                     effectedRowCount += statement.executeUpdate();
                     statement.clearParameters();
                 }
-                connection.commit();
+                if (!isInTransactionModel()) {
+                    connection.commit();
+                }
                 return effectedRowCount;
             } catch (Throwable exception) {
                 try {
@@ -278,13 +310,17 @@ public class SQLite3JdbcTemplate {
         return write(connection -> {
             SQLite3PreparedStatement statement = null;
             try {
-                connection.setAutoCommit(false);
+                if (!isInTransactionModel()) {
+                    connection.setAutoCommit(false);
+                }
                 statement = new SQLite3PreparedStatement(connection.prepareStatement(sql));
                 if (consumer != null) {
                     consumer.accept(statement);
                 }
                 int rowCount = statement.executeUpdate();
-                connection.commit();
+                if (!isInTransactionModel()) {
+                    connection.commit();
+                }
                 return rowCount;
             } catch (Throwable exception) {
                 try {
