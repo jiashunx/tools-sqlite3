@@ -6,6 +6,7 @@ import io.github.jiashunx.tools.sqlite3.connection.SQLite3ConnectionPool;
 import io.github.jiashunx.tools.sqlite3.connection.SQLite3PreparedStatement;
 import io.github.jiashunx.tools.sqlite3.exception.SQLite3MappingException;
 import io.github.jiashunx.tools.sqlite3.exception.SQLite3SQLException;
+import io.github.jiashunx.tools.sqlite3.function.VoidFunc;
 import io.github.jiashunx.tools.sqlite3.model.*;
 import io.github.jiashunx.tools.sqlite3.table.SQLPackage;
 import io.github.jiashunx.tools.sqlite3.util.SQLite3Utils;
@@ -123,6 +124,29 @@ public class SQLite3JdbcTemplate {
     public <R> List<R> queryForList(String sql, Consumer<SQLite3PreparedStatement> consumer, Class<R> klass)
             throws SQLite3SQLException, SQLite3MappingException {
         return SQLite3Utils.parseQueryResult(queryForResult(sql, consumer), klass);
+    }
+
+    public void doTransaction(Consumer<Connection> consumer) throws SQLite3SQLException, SQLite3MappingException {
+        write(connection -> {
+            try {
+                connection.setAutoCommit(false);
+                try {
+                    consumer.accept(connection);
+                } catch (Throwable exception) {
+                    throw new SQLite3SQLException("doTransaction failed", exception);
+                }
+                connection.commit();
+            } catch (Throwable exception) {
+                try {
+                    connection.rollback();
+                } catch (SQLException exception1) {
+                    throw new SQLite3SQLException(String.format(
+                            "doTransaction failed (rollback failed, reason: %s.)"
+                            , exception1.getMessage()), exception);
+                }
+                throw new SQLite3SQLException("doTransaction failed(rollback success)", exception);
+            }
+        });
     }
 
     public int update(Object object) throws SQLite3SQLException, SQLite3MappingException {
