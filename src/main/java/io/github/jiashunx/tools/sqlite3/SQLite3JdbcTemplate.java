@@ -131,10 +131,6 @@ public class SQLite3JdbcTemplate {
     }
 
     private void query(SQLite3Connection connection, Consumer<Connection> consumer) {
-        if (isInTransactionModel()) {
-            write(connection, consumer);
-            return;
-        }
         connection.read(c -> {
             try {
                 consumer.accept(c);
@@ -151,9 +147,6 @@ public class SQLite3JdbcTemplate {
     }
 
     private <R> R query(SQLite3Connection connection, Function<Connection, R> function) {
-        if (isInTransactionModel()) {
-            return write(connection, function);
-        }
         return connection.read(c -> {
             try {
                 return function.apply(c);

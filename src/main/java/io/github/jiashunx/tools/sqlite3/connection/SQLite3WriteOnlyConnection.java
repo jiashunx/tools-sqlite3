@@ -16,12 +16,12 @@ public class SQLite3WriteOnlyConnection extends SQLite3Connection {
     }
 
     public void read(Consumer<Connection> consumer) throws ConnectionStatusChangedException {
-        super.read(consumer);
+        super.write(consumer);
     }
 
     @Override
     public <R> R read(Function<Connection, R> function) throws ConnectionStatusChangedException {
-        return super.read(function);
+        return super.write(function);
     }
 
 }
