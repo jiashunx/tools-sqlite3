@@ -15,13 +15,13 @@ public class SQLite3WriteOnlyConnection extends SQLite3Connection {
         super(connectionPool, connection);
     }
 
-    public void read(Consumer<Connection> consumer) throws ConnectionStatusChangedException, UnsupportedOperationException {
-        throw new UnsupportedOperationException();
+    public void read(Consumer<Connection> consumer) throws ConnectionStatusChangedException {
+        super.read(consumer);
     }
 
     @Override
-    public <R> R read(Function<Connection, R> function) throws ConnectionStatusChangedException, UnsupportedOperationException {
-        throw new UnsupportedOperationException();
+    public <R> R read(Function<Connection, R> function) throws ConnectionStatusChangedException {
+        return super.read(function);
     }
 
 }
