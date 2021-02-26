@@ -38,5 +38,6 @@
       - fixbug: 针对实体的默认Service类在对数据进行缓存处理时，在insert/update操作后清空缓存
    - version 1.1.5 (doing)
       - refactor: SQLite3JdbcTemplate功能重构 -> 增加对事务的控制处理（重点是其 [doTransaction][1] 方法）
+      - refactor: SQLite3Service缓存处理优化，支持开启/关闭缓存，支持全局/局部缓存
 
 [1]: src/main/java/io/github/jiashunx/tools/sqlite3/SQLite3JdbcTemplate.java

@@ -26,7 +26,7 @@ public abstract class SQLite3Service<Entity, ID> {
     private volatile boolean listAllMethodInvoked = false;
     // 全局缓存
     private final Map<ID, Entity> entityCacheMap = new LinkedHashMap<>();
-    // 临时缓存
+    // 局部缓存
     private final Map<ID, Entity> entityCacheMapTmp = new HashMap<>();
     private final ReentrantReadWriteLock entityCacheMapLock = new ReentrantReadWriteLock();
 
