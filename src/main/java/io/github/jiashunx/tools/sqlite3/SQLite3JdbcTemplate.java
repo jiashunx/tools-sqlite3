@@ -399,8 +399,9 @@ public class SQLite3JdbcTemplate {
                                 "doTransaction failed (rollback failed, reason: %s.)"
                                 , exception1.getMessage()), exception);
                     }
+                    throw new SQLite3SQLException("doTransaction failed(rollback success)", exception);
                 }
-                throw new SQLite3SQLException("doTransaction failed(rollback success)", exception);
+                throw new SQLite3SQLException("doTransaction failed(transaction-mode => ignore rollback)", exception);
             } finally {
                 if (!hasPrevTransaction) {
                     resetTransactionMode();
