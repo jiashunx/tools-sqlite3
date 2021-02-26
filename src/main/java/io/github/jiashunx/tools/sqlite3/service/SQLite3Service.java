@@ -22,7 +22,10 @@ public abstract class SQLite3Service<Entity, ID> {
     private final Entity defaultEntity;
 
     private volatile boolean listAllMethodInvoked = false;
+    // 全局缓存
     private final Map<ID, Entity> entityMap = new LinkedHashMap<>();
+    // 临时缓存
+    private final Map<ID, Entity> entityMap0 = new HashMap<>();
     private final ReentrantReadWriteLock entityMapLock = new ReentrantReadWriteLock();
 
     public SQLite3Service(SQLite3JdbcTemplate jdbcTemplate) throws NullPointerException, SQLite3Exception {
@@ -38,8 +41,11 @@ public abstract class SQLite3Service<Entity, ID> {
         return jdbcTemplate;
     }
 
-    private synchronized void setListAllMethodInvoked(boolean invoked) {
-        this.listAllMethodInvoked = invoked;
+    private Map<ID, Entity> getEntityMap() {
+        if (listAllMethodInvoked) {
+            return entityMap;
+        }
+        return entityMap0;
     }
 
     protected abstract Class<Entity> getEntityClass();
@@ -74,12 +80,15 @@ public abstract class SQLite3Service<Entity, ID> {
         AtomicReference<List<Entity>> ref = new AtomicReference<>();
         if (!listAllMethodInvoked) {
             entityCacheWriteLock(() -> {
-                entityMap.clear();
+                if (listAllMethodInvoked) {
+                    return;
+                }
+                entityMap0.clear();
                 List<Entity> entityList = getJdbcTemplate().queryForList(getListAllSQL(), getEntityClass());
                 for (Entity entity: entityList) {
                     entityMap.put(getIdFieldValue(entity), entity);
                 }
-                setListAllMethodInvoked(true);
+                listAllMethodInvoked = true;
             });
         }
         entityCacheReadLock(() -> {
@@ -98,18 +107,21 @@ public abstract class SQLite3Service<Entity, ID> {
         }
         AtomicReference<Entity> ref = new AtomicReference<>();
         entityCacheReadLock(() -> {
-            ref.set(entityMap.get(id));
+            ref.set(getEntityMap().get(id));
         });
         if (ref.get() == null) {
             entityCacheWriteLock(() -> {
-                Entity tmpEntity = getJdbcTemplate().queryForObj(getFindOneSQL(), statement -> {
-                    castIDForStatement(statement, 1, id);
-                }, getEntityClass());
-                if (tmpEntity == null) {
-                    tmpEntity = defaultEntity;
+                ref.set(getEntityMap().get(id));
+                if (ref.get() == null) {
+                    Entity tmpEntity = getJdbcTemplate().queryForObj(getFindOneSQL(), statement -> {
+                        castIDForStatement(statement, 1, id);
+                    }, getEntityClass());
+                    if (tmpEntity == null) {
+                        tmpEntity = defaultEntity;
+                    }
+                    getEntityMap().put(id, tmpEntity);
+                    ref.set(tmpEntity);
                 }
-                entityMap.put(id, tmpEntity);
-                ref.set(tmpEntity);
             });
         }
         Entity entity = ref.get();
@@ -125,9 +137,8 @@ public abstract class SQLite3Service<Entity, ID> {
         }
         entityCacheWriteLock(() -> {
             jdbcTemplate.insert(entity);
-            entityMap.put(getIdFieldValue(entity), entity);
+            getEntityMap().put(getIdFieldValue(entity), entity);
         });
-        setListAllMethodInvoked(false);
         return entity;
     }
 
@@ -146,9 +157,8 @@ public abstract class SQLite3Service<Entity, ID> {
                 map.put(getIdFieldValue(entity), entity);
             });
             jdbcTemplate.insert(entities);
-            entityMap.putAll(map);
+            getEntityMap().putAll(map);
         });
-        setListAllMethodInvoked(false);
         return entities;
     }
 
@@ -159,9 +169,8 @@ public abstract class SQLite3Service<Entity, ID> {
         entityCacheWriteLock(() -> {
             ID id = getIdFieldValue(entity);
             jdbcTemplate.update(entity);
-            entityMap.put(id, entity);
+            getEntityMap().put(id, entity);
         });
-        setListAllMethodInvoked(false);
         return entity;
     }
 
@@ -180,9 +189,8 @@ public abstract class SQLite3Service<Entity, ID> {
                 map.put(getIdFieldValue(entity), entity);
             });
             jdbcTemplate.update(entities);
-            entityMap.putAll(map);
+            getEntityMap().putAll(map);
         });
-        setListAllMethodInvoked(false);
         return entities;
     }
 
@@ -223,7 +231,7 @@ public abstract class SQLite3Service<Entity, ID> {
             ref.set(jdbcTemplate.batchUpdate(tableModel.getDeleteSQL(), idList.size(), (index, statement) -> {
                 castIDForStatement(statement, 1, idList.get(index));
             }));
-            idList.forEach(entityMap::remove);
+            idList.forEach(getEntityMap()::remove);
         });
         return ref.get();
     }
