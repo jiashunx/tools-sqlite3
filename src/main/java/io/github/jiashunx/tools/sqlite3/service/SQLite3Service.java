@@ -21,14 +21,22 @@ public abstract class SQLite3Service<Entity, ID> {
 
     private final Entity defaultEntity;
 
+    private final boolean cacheEnabled;
+
     private volatile boolean listAllMethodInvoked = false;
     // 全局缓存
-    private final Map<ID, Entity> entityMap = new LinkedHashMap<>();
+    private final Map<ID, Entity> entityCacheMap = new LinkedHashMap<>();
     // 临时缓存
-    private final Map<ID, Entity> entityMap0 = new HashMap<>();
-    private final ReentrantReadWriteLock entityMapLock = new ReentrantReadWriteLock();
+    private final Map<ID, Entity> entityCacheMapTmp = new HashMap<>();
+    private final ReentrantReadWriteLock entityCacheMapLock = new ReentrantReadWriteLock();
 
     public SQLite3Service(SQLite3JdbcTemplate jdbcTemplate) throws NullPointerException, SQLite3Exception {
+        // 默认开启缓存
+        this(jdbcTemplate, true);
+    }
+
+    public SQLite3Service(SQLite3JdbcTemplate jdbcTemplate, boolean cacheEnabled) throws NullPointerException, SQLite3Exception {
+        this.cacheEnabled = cacheEnabled;
         this.jdbcTemplate = Objects.requireNonNull(jdbcTemplate);
         try {
             this.defaultEntity = getEntityClass().newInstance();
@@ -41,34 +49,37 @@ public abstract class SQLite3Service<Entity, ID> {
         return jdbcTemplate;
     }
 
-    private Map<ID, Entity> getEntityMap() {
+    private Map<ID, Entity> getEntityCacheMap() {
         if (listAllMethodInvoked) {
-            return entityMap;
+            return entityCacheMap;
         }
-        return entityMap0;
+        return entityCacheMapTmp;
     }
 
     protected abstract Class<Entity> getEntityClass();
 
     protected void entityCacheReadLock(VoidFunc voidFunc) {
-        entityMapLock.readLock().lock();
+        entityCacheMapLock.readLock().lock();
         try {
             voidFunc.apply();
         } finally {
-            entityMapLock.readLock().unlock();
+            entityCacheMapLock.readLock().unlock();
         }
     }
 
     protected void entityCacheWriteLock(VoidFunc voidFunc) {
-        entityMapLock.writeLock().lock();
+        entityCacheMapLock.writeLock().lock();
         try {
             voidFunc.apply();
         } finally {
-            entityMapLock.writeLock().unlock();
+            entityCacheMapLock.writeLock().unlock();
         }
     }
 
     public ID getIdFieldValue(Entity entity) {
+        if (entity == null) {
+            throw new NullPointerException();
+        }
         return (ID) SQLite3Utils.getClassTableModel(getEntityClass()).getIdFieldValue(entity);
     }
 
@@ -76,23 +87,30 @@ public abstract class SQLite3Service<Entity, ID> {
         return SQLite3Utils.getClassTableModel(getEntityClass()).getSelectAllSQL();
     }
 
+    public List<Entity> listAllWithNoCache() throws NullPointerException, SQLite3MappingException {
+        return getJdbcTemplate().queryForList(getListAllSQL(), getEntityClass());
+    }
+
     public List<Entity> listAll() throws NullPointerException, SQLite3MappingException {
+        if (!cacheEnabled) {
+            return listAllWithNoCache();
+        }
         AtomicReference<List<Entity>> ref = new AtomicReference<>();
         if (!listAllMethodInvoked) {
             entityCacheWriteLock(() -> {
                 if (listAllMethodInvoked) {
                     return;
                 }
-                entityMap0.clear();
-                List<Entity> entityList = getJdbcTemplate().queryForList(getListAllSQL(), getEntityClass());
+                entityCacheMapTmp.clear();
+                List<Entity> entityList = listAllWithNoCache();
                 for (Entity entity: entityList) {
-                    entityMap.put(getIdFieldValue(entity), entity);
+                    entityCacheMap.put(getIdFieldValue(entity), entity);
                 }
                 listAllMethodInvoked = true;
             });
         }
         entityCacheReadLock(() -> {
-            ref.set(new ArrayList<>(entityMap.values()));
+            ref.set(new ArrayList<>(entityCacheMap.values()));
         });
         return ref.get();
     }
@@ -101,25 +119,35 @@ public abstract class SQLite3Service<Entity, ID> {
         return SQLite3Utils.getClassTableModel(getEntityClass()).getSelectSQL();
     }
 
+    public Entity findWithNoCache(ID id) throws NullPointerException, SQLite3MappingException {
+        if (id == null) {
+            throw new NullPointerException();
+        }
+        return getJdbcTemplate().queryForObj(getFindOneSQL(), statement -> {
+            castIDForStatement(statement, 1, id);
+        }, getEntityClass());
+    }
+
     public Entity find(ID id) throws NullPointerException, SQLite3MappingException {
         if (id == null) {
             throw new NullPointerException();
         }
+        if (!cacheEnabled) {
+            return findWithNoCache(id);
+        }
         AtomicReference<Entity> ref = new AtomicReference<>();
         entityCacheReadLock(() -> {
-            ref.set(getEntityMap().get(id));
+            ref.set(getEntityCacheMap().get(id));
         });
         if (ref.get() == null) {
             entityCacheWriteLock(() -> {
-                ref.set(getEntityMap().get(id));
+                ref.set(getEntityCacheMap().get(id));
                 if (ref.get() == null) {
-                    Entity tmpEntity = getJdbcTemplate().queryForObj(getFindOneSQL(), statement -> {
-                        castIDForStatement(statement, 1, id);
-                    }, getEntityClass());
+                    Entity tmpEntity = findWithNoCache(id);
                     if (tmpEntity == null) {
                         tmpEntity = defaultEntity;
                     }
-                    getEntityMap().put(id, tmpEntity);
+                    getEntityCacheMap().put(id, tmpEntity);
                     ref.set(tmpEntity);
                 }
             });
@@ -131,18 +159,26 @@ public abstract class SQLite3Service<Entity, ID> {
         return entity;
     }
 
-    public Entity insert(Entity entity) throws NullPointerException, SQLite3MappingException {
+    public Entity insertWithNoCache(Entity entity) throws NullPointerException, SQLite3MappingException {
         if (entity == null) {
             throw new NullPointerException();
         }
+        getJdbcTemplate().insert(entity);
+        return entity;
+    }
+
+    public Entity insert(Entity entity) throws NullPointerException, SQLite3MappingException {
+        if (!cacheEnabled) {
+            return insertWithNoCache(entity);
+        }
         entityCacheWriteLock(() -> {
-            jdbcTemplate.insert(entity);
-            getEntityMap().put(getIdFieldValue(entity), entity);
+            insertWithNoCache(entity);
+            getEntityCacheMap().put(getIdFieldValue(entity), entity);
         });
         return entity;
     }
 
-    public List<Entity> insert(List<Entity> entities) throws NullPointerException, SQLite3MappingException {
+    public List<Entity> insertWithNoCache(List<Entity> entities) throws NullPointerException, SQLite3MappingException {
         if (entities == null) {
             throw new NullPointerException();
         }
@@ -151,30 +187,46 @@ public abstract class SQLite3Service<Entity, ID> {
                 throw new NullPointerException();
             }
         });
+        getJdbcTemplate().insert(entities);
+        return entities;
+    }
+
+    public List<Entity> insert(List<Entity> entities) throws NullPointerException, SQLite3MappingException {
+        if (!cacheEnabled) {
+            return insertWithNoCache(entities);
+        }
         entityCacheWriteLock(() -> {
             Map<ID, Entity> map = new HashMap<>();
             entities.forEach(entity -> {
                 map.put(getIdFieldValue(entity), entity);
             });
-            jdbcTemplate.insert(entities);
-            getEntityMap().putAll(map);
+            insertWithNoCache(entities);
+            getEntityCacheMap().putAll(map);
         });
         return entities;
     }
 
-    public Entity update(Entity entity) throws NullPointerException, SQLite3MappingException {
+    public Entity updateWithNoCache(Entity entity) throws NullPointerException, SQLite3MappingException {
         if (entity == null) {
             throw new NullPointerException();
         }
+        getJdbcTemplate().update(entity);
+        return entity;
+    }
+
+    public Entity update(Entity entity) throws NullPointerException, SQLite3MappingException {
+        if (!cacheEnabled) {
+            return updateWithNoCache(entity);
+        }
         entityCacheWriteLock(() -> {
             ID id = getIdFieldValue(entity);
-            jdbcTemplate.update(entity);
-            getEntityMap().put(id, entity);
+            updateWithNoCache(entity);
+            getEntityCacheMap().put(id, entity);
         });
         return entity;
     }
 
-    public List<Entity> update(List<Entity> entities) throws NullPointerException, SQLite3MappingException {
+    public List<Entity> updateWithNoCache(List<Entity> entities) throws NullPointerException, SQLite3MappingException {
         if (entities == null) {
             throw new NullPointerException();
         }
@@ -183,13 +235,21 @@ public abstract class SQLite3Service<Entity, ID> {
                 throw new NullPointerException();
             }
         });
+        getJdbcTemplate().update(entities);
+        return entities;
+    }
+
+    public List<Entity> update(List<Entity> entities) throws NullPointerException, SQLite3MappingException {
+        if (!cacheEnabled) {
+            return updateWithNoCache(entities);
+        }
         entityCacheWriteLock(() -> {
             Map<ID, Entity> map = new HashMap<>();
             entities.forEach(entity -> {
                 map.put(getIdFieldValue(entity), entity);
             });
-            jdbcTemplate.update(entities);
-            getEntityMap().putAll(map);
+            updateWithNoCache(entities);
+            getEntityCacheMap().putAll(map);
         });
         return entities;
     }
@@ -216,7 +276,7 @@ public abstract class SQLite3Service<Entity, ID> {
         return deleteById(Collections.singletonList(id));
     }
 
-    public int deleteById(List<ID> idList) throws NullPointerException, SQLite3MappingException {
+    public int deleteByIdWithNoCache(List<ID> idList) throws NullPointerException, SQLite3MappingException {
         if (idList == null) {
             throw new NullPointerException();
         }
@@ -225,13 +285,20 @@ public abstract class SQLite3Service<Entity, ID> {
                 throw new NullPointerException();
             }
         });
+        TableModel tableModel = SQLite3Utils.getClassTableModel(getEntityClass());
+        return jdbcTemplate.batchUpdate(tableModel.getDeleteSQL(), idList.size(), (index, statement) -> {
+            castIDForStatement(statement, 1, idList.get(index));
+        });
+    }
+
+    public int deleteById(List<ID> idList) throws NullPointerException, SQLite3MappingException {
+        if (!cacheEnabled) {
+            return deleteByIdWithNoCache(idList);
+        }
         AtomicReference<Integer> ref = new AtomicReference<>();
         entityCacheWriteLock(() -> {
-            TableModel tableModel = SQLite3Utils.getClassTableModel(getEntityClass());
-            ref.set(jdbcTemplate.batchUpdate(tableModel.getDeleteSQL(), idList.size(), (index, statement) -> {
-                castIDForStatement(statement, 1, idList.get(index));
-            }));
-            idList.forEach(getEntityMap()::remove);
+            ref.set(deleteByIdWithNoCache(idList));
+            idList.forEach(getEntityCacheMap()::remove);
         });
         return ref.get();
     }
