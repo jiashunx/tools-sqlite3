@@ -52,16 +52,16 @@ public class SQLite3Test {
                 for (int j = 0; j < 1000; j++) {
                     int table1RowCount = jdbcTemplate.queryForInt("SELECT COUNT(1) COUNT FROM TABLE_1");
                     logger.info("{} - row count: {}", Thread.currentThread().getName(), table1RowCount);
-                    try {
-                        Thread.sleep(50L);
-                    } catch (InterruptedException exception) {
-                        exception.printStackTrace();
-                    }
+//                    try {
+//                        Thread.sleep(50L);
+//                    } catch (InterruptedException exception) {
+//                        exception.printStackTrace();
+//                    }
                 }
             });
             thread.setName("table-1-read-" + (i + 1));
             threadList.add(thread);
-            thread.start();
+//            thread.start();
         }
         // table 1 写
         for (int i = 0; i < 5; i++) {
@@ -72,11 +72,13 @@ public class SQLite3Test {
                         statement.setInt(2, 22);
                     });
                     logger.info("{} - effected row count: {}", Thread.currentThread().getName(), effectedRowCount);
-                    try {
-                        Thread.sleep(50L);
-                    } catch (InterruptedException exception) {
-                        exception.printStackTrace();
-                    }
+//                    try {
+//                        Thread.sleep(50L);
+//                    } catch (InterruptedException exception) {
+//                        exception.printStackTrace();
+//                    }
+                    int table1RowCount = jdbcTemplate.queryForInt("SELECT COUNT(1) COUNT FROM TABLE_1");
+                    logger.info("{} - row count: {}", Thread.currentThread().getName(), table1RowCount);
                 }
             });
             thread.setName("table-1-write-" + (i + 1));
