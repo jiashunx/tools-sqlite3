@@ -293,6 +293,8 @@ public class SQLite3Utils {
                     statement.setClob(insertIndex, (Reader) value);
                 } else if (fieldType == Clob.class) {
                     statement.setClob(insertIndex, (Clob) value);
+                } else if (fieldType == NClob.class) {
+                    statement.setNClob(insertIndex, (NClob) value);
                 } else if (fieldType == java.util.Date.class) {
                     switch (columnMetadata.getColumnTypeName()) {
                         case "DATE":
@@ -334,22 +336,29 @@ public class SQLite3Utils {
                 ColumnMetadata columnMetadata = entry.getValue();
                 String columnLabel = columnMetadata.getColumnLabel();
                 Object columnValue = null;
+                /**
+                 * java.sql.JDBCType
+                 */
                 switch (columnMetadata.getColumnTypeName()) {
                     case "BOOLEAN":
-                        columnValue = resultSet.getBoolean(columnLabel);
-                        break;
                     case "BIT":
                         columnValue = resultSet.getBoolean(columnLabel);
                         break;
+                    case "INT1":
                     case "TINYINT":
                         columnValue = resultSet.getByte(columnLabel);
                         break;
+                    case "INT2":
                     case "SMALLINT":
                         columnValue = resultSet.getShort(columnLabel);
                         break;
+                    case "MEDIUMINT":
+                    case "INT":
+                    case "INT4":
                     case "INTEGER":
                         columnValue = resultSet.getInt(columnLabel);
                         break;
+                    case "INT8":
                     case "BIGINT":
                         columnValue = resultSet.getLong(columnLabel);
                         break;
@@ -367,10 +376,18 @@ public class SQLite3Utils {
                     case "CHAR":
                     case "VARCHAR":
                     case "LONGVARCHAR":
+                    case "CLOB":
+                    case "TEXT":
+                    case "TINYTEXT":
+                    case "MEDIUMTEXT":
+                    case "LONGTEXT":
+                        columnValue = resultSet.getString(columnLabel);
+                        break;
                     case "NCHAR":
                     case "NVARCHAR":
                     case "LONGNVARCHAR":
-                        columnValue = resultSet.getString(columnLabel);
+                    case "NCLOB":
+                        columnValue = resultSet.getNString(columnLabel);
                         break;
                     case "DATE":
                         columnValue = resultSet.getDate(columnLabel);
@@ -385,10 +402,6 @@ public class SQLite3Utils {
                     case "VARBINARY":
                     case "LONGVARBINARY":
                         columnValue = resultSet.getBytes(columnLabel);
-                        break;
-                    case "CLOB":
-                    case "NCLOB":
-                        columnValue = resultSet.getObject(columnLabel);
                         break;
                     case "BLOB":
                         ByteArrayOutputStream bos = new ByteArrayOutputStream();
