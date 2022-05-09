@@ -14,6 +14,8 @@ public class Column {
     private String tableDesc;
     private String columnComment;
     private int length;
+    private boolean notNull;
+    private String defaultValue;
 
     public Column() {}
 
@@ -71,5 +73,21 @@ public class Column {
 
     public void setLength(int length) {
         this.length = length;
+    }
+
+    public boolean isNotNull() {
+        return notNull;
+    }
+
+    public void setNotNull(boolean notNull) {
+        this.notNull = notNull;
+    }
+
+    public String getDefaultValue() {
+        return defaultValue;
+    }
+
+    public void setDefaultValue(String defaultValue) {
+        this.defaultValue = defaultValue;
     }
 }

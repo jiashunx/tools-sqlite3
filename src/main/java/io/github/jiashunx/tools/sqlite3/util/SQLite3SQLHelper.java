@@ -95,6 +95,12 @@ public class SQLite3SQLHelper {
                                     if (length != null && !"".equals(length.trim())) {
                                         column.setLength(Integer.parseInt(length.trim()));
                                     }
+                                    column.setNotNull("true".equals(columnElement.attributeValue("not-null")));
+                                    String defaultValue = columnElement.attributeValue("default");
+                                    if (defaultValue == null || defaultValue.trim().isEmpty()) {
+                                        defaultValue = "";
+                                    }
+                                    column.setDefaultValue(defaultValue);
                                     column.setTableName(tableName);
                                     column.setTableDesc(tableDesc);
                                     sqlPackageRef.get().addColumnDDL(column);

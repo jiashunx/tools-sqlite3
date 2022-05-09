@@ -20,8 +20,8 @@
     <ddl>
         <table name="MAPPING_TEST_ENTITY">
             <column name="FIELD_ID" type="VARCHAR" primary="true" length="32" />
-            <column name="FIELD_VARCHAR" type="VARCHAR" length="32" />
-            <column name="FIELD_NVARCHAR" type="NVARCHAR" />
+            <column name="FIELD_VARCHAR" type="VARCHAR" length="32" not-null="true" />
+            <column name="FIELD_NVARCHAR" type="NVARCHAR" default="jjj" />
             <column name="FIELD_INTEGER" type="INTEGER" />
             <column name="FIELD_MEDIUMINT" type="MEDIUMINT" />
             <column name="FIELD_INT" type="INT" />

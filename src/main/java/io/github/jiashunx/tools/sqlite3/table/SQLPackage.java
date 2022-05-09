@@ -76,7 +76,15 @@ public class SQLPackage {
             if (column.getLength() != Integer.MIN_VALUE){
                 lengthStr = "(" + column.getLength() + ")";
             }
-            columnDefList.add(column.getColumnName() + " " + column.getColumnType() + lengthStr);
+            String notNull = "";
+            if (column.isNotNull()) {
+                notNull = " NOT NULL ";
+            }
+            String defaultValue = "";
+            if (!column.getDefaultValue().isEmpty()) {
+                defaultValue = " DEFAULT " + column.getDefaultValue();
+            }
+            columnDefList.add(column.getColumnName() + " " + column.getColumnType() + lengthStr + notNull + defaultValue);
         });
         builder.append(StringUtils.join(columnDefList, ","));
         if (!primaryColumns.isEmpty()) {
@@ -112,10 +120,18 @@ public class SQLPackage {
         if (column.getLength() != Integer.MIN_VALUE){
             lengthStr = "(" + column.getLength() + ")";
         }
+        String notNull = "";
+        if (column.isNotNull()) {
+            notNull = " NOT NULL ";
+        }
+        String defaultValue = "";
+        if (!column.getDefaultValue().isEmpty()) {
+            defaultValue = " DEFAULT " + column.getDefaultValue();
+        }
         return "ALTER TABLE " + tableName + " ADD COLUMN " +
                 columnName +
                 " " +
-                column.getColumnType() + lengthStr;
+                column.getColumnType() + lengthStr + notNull + defaultValue;
     }
 
     public String getIndexDefineSQL(String tableName, String indexName) {
