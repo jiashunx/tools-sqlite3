@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<table-metadata id="mapping-test">
+    <!-- 数据查询SQL -->
+    <dql>
+        <sql id="00000000000001" desc="" class="io.github.jiashunx.tools.sqlite3.SQLite3MappingTest.MappingTestEntity">
+            <![CDATA[
+                SELECT * FROM MAPPING_TEST_ENTITY_VIEW;
+            ]]>
+        </sql>
+    </dql>
+    <!-- 数据操作SQL -->
+    <dml>
+        <sql id="0000002" desc="">
+            <![CDATA[
+                DELETE FROM MAPPING_TEST_ENTITY_VIEW WHERE FIELD_ID=?
+            ]]>
+        </sql>
+    </dml>
+    <!-- 数据定义SQL -->
+    <ddl>
+        <table name="MAPPING_TEST_ENTITY">
+            <column name="FIELD_ID" type="VARCHAR" primary="true" />
+            <column name="FIELD_VARCHAR" type="VARCHAR" />
+            <column name="FIELD_NVARCHAR" type="NVARCHAR" />
+            <column name="FIELD_INTEGER" type="INTEGER" />
+            <column name="FIELD_TEXT" type="TEXT" />
+            <column name="FIELD_FLOAT" type="FLOAT" />
+            <column name="FIELD_BLOB" type="BLOB" />
+            <column name="FIELD_BOOLEAN" type="BOOLEAN" />
+            <column name="FIELD_NUMERIC" type="NUMERIC" />
+            <column name="FIELD_DATE" type="DATE" />
+            <column name="FIELD_TIME" type="TIME" />
+            <column name="FIELD_TIMESTAMP" type="TIMESTAMP" />
+        </table>
+        <view name="MAPPING_TEST_ENTITY_VIEW" temporary="false">
+            <!-- create view as select * from table where condition. -->
+            <![CDATA[
+                SELECT * FROM MAPPING_TEST_ENTITY
+                WHERE 1=1
+            ]]>
+        </view>
+        <index name="MAPPING_TEST_ENTITY_INDEX" table="MAPPING_TEST_ENTITY" unique="false">
+            <column name="FIELD_VARCHAR" />
+            <column name="FIELD_INTEGER" />
+        </index>
+    </ddl>
+</table-metadata>
