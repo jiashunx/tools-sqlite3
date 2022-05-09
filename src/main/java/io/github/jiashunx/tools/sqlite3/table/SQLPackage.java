@@ -3,7 +3,6 @@ package io.github.jiashunx.tools.sqlite3.table;
 import org.sqlite.util.StringUtils;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author jiashunx
@@ -20,35 +19,35 @@ public class SQLPackage {
     /**
      * key - sqlid
      */
-    private final Map<String, SQL> dql = new ConcurrentHashMap<>();
+    private final Map<String, SQL> dql = new LinkedHashMap<>();
     /**
      * key - sqlid
      */
-    private final Map<String, SQL> dml = new ConcurrentHashMap<>();
+    private final Map<String, SQL> dml = new LinkedHashMap<>();
     /**
      * key - tableName
      */
-    private final Map<String, List<Column>> columnDDL = new ConcurrentHashMap<>();
+    private final Map<String, List<Column>> columnDDL = new LinkedHashMap<>();
     /**
      * key - tableName_columnName
      */
-    private final Map<String, Column> columnMap = new ConcurrentHashMap<>();
+    private final Map<String, Column> columnMap = new LinkedHashMap<>();
     /**
      * key - tableName
      */
-    private final Map<String, List<Index>> indexDDL = new ConcurrentHashMap<>();
+    private final Map<String, List<Index>> indexDDL = new LinkedHashMap<>();
     /**
      * key - tableName_columnName
      */
-    private final Map<String, Index> indexMap = new ConcurrentHashMap<>();
+    private final Map<String, Index> indexMap = new LinkedHashMap<>();
     /**
      * key - viewName
      */
-    private final Map<String, View> viewDDL = new ConcurrentHashMap<>();
+    private final Map<String, View> viewDDL = new LinkedHashMap<>();
     /**
      * key - triggerName
      */
-    private final Map<String, Trigger> triggerDDL = new ConcurrentHashMap<>();
+    private final Map<String, Trigger> triggerDDL = new LinkedHashMap<>();
 
     public SQLPackage() {}
 
@@ -76,6 +75,7 @@ public class SQLPackage {
         StringBuilder builder = new StringBuilder("CREATE TABLE ").append(tableName).append("(");
         List<String> primaryColumns = new ArrayList<>();
         List<String> columnDefList = new ArrayList<>();
+        List<String> foreignKeyDefList = new ArrayList<>();
         columns.forEach(column -> {
             if (column.isPrimary()) {
                 primaryColumns.add(column.getColumnName());
@@ -93,6 +93,10 @@ public class SQLPackage {
                 defaultValue = " DEFAULT " + column.getDefaultValue();
             }
             columnDefList.add(column.getColumnName() + " " + column.getColumnType() + lengthStr + notNull + defaultValue);
+            if (column.getForeignTable() != null && column.getForeignColumn() != null
+                    && !column.getForeignTable().trim().isEmpty() && !column.getForeignColumn().trim().isEmpty()) {
+                foreignKeyDefList.add("FOREIGN KEY (" + column.getColumnName() + ") REFERENCES " + column.getForeignTable().trim() + "(" + column.getForeignColumn().trim() + ")");
+            }
         });
         builder.append(StringUtils.join(columnDefList, ","));
         if (!primaryColumns.isEmpty()) {
@@ -100,6 +104,10 @@ public class SQLPackage {
                     .append(" PRIMARY KEY(")
                     .append(StringUtils.join(primaryColumns, ","))
                     .append(")");
+        }
+        if (!foreignKeyDefList.isEmpty()) {
+            builder.append(",")
+                    .append(StringUtils.join(foreignKeyDefList, ","));
         }
         builder.append(")");
         return builder.toString();

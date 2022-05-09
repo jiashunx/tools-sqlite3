@@ -103,6 +103,8 @@ public class SQLite3SQLHelper {
                                     column.setDefaultValue(defaultValue);
                                     column.setTableName(tableName);
                                     column.setTableDesc(tableDesc);
+                                    column.setForeignTable(columnElement.attributeValue("foreign-table"));
+                                    column.setForeignColumn(columnElement.attributeValue("foreign-column"));
                                     sqlPackageRef.get().addColumnDDL(column);
                                 });
                             });

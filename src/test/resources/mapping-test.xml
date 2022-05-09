@@ -18,7 +18,7 @@
     </dml>
     <!-- 数据定义SQL -->
     <ddl>
-        <table name="MAPPING_TEST_ENTITY" desc="">
+        <table name="MAPPING_TEST_ENTITY" desc="全量字段映射样例">
             <column name="FIELD_ID" type="VARCHAR" primary="true" length="32" />
             <column name="FIELD_VARCHAR" type="VARCHAR" length="32" not-null="true" />
             <column name="FIELD_NVARCHAR" type="NVARCHAR" default="jjj" />
@@ -88,5 +88,27 @@
                 END;
             ]]>
         </trigger>
+        <table name="TEST_TABLE1" desc="外键测试-父表">
+            <column name="ID" type="INT" primary="true" not-null="true" />
+            <column name="NAME" type="TEXT" not-null="true" />
+            <column name="AGE" type="INT" not-null="true" />
+        </table>
+        <table name="TEST_TABLE2" desc="外键测试-子表">
+            <column name="ID" type="INT" primary="true" not-null="true" />
+            <column name="NAME" type="TEXT" not-null="true" />
+            <column name="PID" type="INT" not-null="true" foreign-table="TEST_TABLE1" foreign-column="ID" />
+            <column name="PNAME" type="TEXT" not-null="true" foreign-table="TEST_TABLE1" foreign-column="NAME" />
+            <!--SQLite只能在create table中定义外键-->
+            <!--<foreign-key name="key-name">-->
+            <!--<columns>A,B,C</columns>-->
+            <!--<ref-table>table-name</ref-table>-->
+            <!--<ref-columns>A,B,C</ref-columns>-->
+            <!--</foreign-key>-->
+            <foreign-key name="my-foreign-key" desc="">
+                <columns>PID,PNAME</columns>
+                <ref-table>TEST_TABLE1</ref-table>
+                <ref-columns>ID,NAME</ref-columns>
+            </foreign-key>
+        </table>
     </ddl>
 </table-metadata>

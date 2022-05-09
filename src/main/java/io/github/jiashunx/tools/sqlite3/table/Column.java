@@ -16,6 +16,8 @@ public class Column {
     private int length;
     private boolean notNull;
     private String defaultValue;
+    private String foreignTable;
+    private String foreignColumn;
 
     public Column() {}
 
@@ -89,5 +91,21 @@ public class Column {
 
     public void setDefaultValue(String defaultValue) {
         this.defaultValue = defaultValue;
+    }
+
+    public String getForeignTable() {
+        return foreignTable;
+    }
+
+    public void setForeignTable(String foreignTable) {
+        this.foreignTable = foreignTable;
+    }
+
+    public String getForeignColumn() {
+        return foreignColumn;
+    }
+
+    public void setForeignColumn(String foreignColumn) {
+        this.foreignColumn = foreignColumn;
     }
 }
