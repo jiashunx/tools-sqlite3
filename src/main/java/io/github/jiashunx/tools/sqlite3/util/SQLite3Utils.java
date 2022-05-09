@@ -381,13 +381,11 @@ public class SQLite3Utils {
                     case "TINYTEXT":
                     case "MEDIUMTEXT":
                     case "LONGTEXT":
-                        columnValue = resultSet.getString(columnLabel);
-                        break;
                     case "NCHAR":
                     case "NVARCHAR":
                     case "LONGNVARCHAR":
                     case "NCLOB":
-                        columnValue = resultSet.getNString(columnLabel);
+                        columnValue = resultSet.getString(columnLabel);
                         break;
                     case "DATE":
                         columnValue = resultSet.getDate(columnLabel);
