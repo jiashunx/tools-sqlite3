@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.jiashunx</groupId>
     <artifactId>tools-sqlite3</artifactId>
-    <version>1.1.6-SNAPSHOT</version>
+    <version>1.1.6</version>
     <name>tools-sqlite3</name>
     <packaging>jar</packaging>
     <properties>

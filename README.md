@@ -18,9 +18,7 @@
       </dependency>
    ```
 
-   - demo参考：[SQLite3Test](./src/test/java/io/github/jiashunx/tools/sqlite3/SQLite3Test.java)，[MappingTest](./src/test/java/io/github/jiashunx/tools/sqlite3/MappingTest.java)
-
-- 版本清单（最新版本：<b>1.1.4</b>）：
+- 版本清单（最新版本：<b>1.1.6</b>）：
 
    - version 1.0.0 (released)
       - feature: 实现主要功能
@@ -39,5 +37,12 @@
    - version 1.1.5 (released)
       - refactor: SQLite3JdbcTemplate功能重构 -> 增加对事务的控制处理（重点是其 [doTransaction][1] 方法）
       - refactor: SQLite3Service缓存处理优化，支持开启/关闭缓存，支持全局/局部缓存
+   - version 1.1.6 (released)
+      - feature: 增加对sqlite数据表触发器的管理及初始化
+      - feature: 增加对sqlite数据表外键的管理及初始化
+      - feature: 增加对sqlite数据表字段not-null及default值的处理
+      - feature: 增加对sqlite数据表字段长度的解析处理
+      - refactor: 优化对sqlite查询结果的映射处理
+      - refactor: 补充优化单元测试用例: [SQLite3MappingTest.java](src/test/java/io/github/jiashunx/tools/sqlite3/SQLite3Test.java)
 
 [1]: src/main/java/io/github/jiashunx/tools/sqlite3/SQLite3JdbcTemplate.java
