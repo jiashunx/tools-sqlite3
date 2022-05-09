@@ -114,6 +114,12 @@ public class SQLite3SQLHelper {
                             index.setTableName(indexElement.attributeValue("table"));
                             index.setUnique("true".equals(indexElement.attributeValue("unique")));
                             AtomicReference<List<String>> columnNamesRef = new AtomicReference<List<String>>(new ArrayList<>());
+                            Optional.ofNullable(indexElement.elements("column")).ifPresent(columnElements -> {
+                                columnElements.forEach(columnElement -> {
+                                    String columnName = columnElement.attributeValue("name");
+                                    columnNamesRef.get().add(columnName);
+                                });
+                            });
                             index.setColumnNames(columnNamesRef.get());
                             sqlPackageRef.get().addIndexDDL(index);
                         });
