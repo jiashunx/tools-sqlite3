@@ -19,8 +19,8 @@
     <!-- 数据定义SQL -->
     <ddl>
         <table name="MAPPING_TEST_ENTITY">
-            <column name="FIELD_ID" type="VARCHAR" primary="true" />
-            <column name="FIELD_VARCHAR" type="VARCHAR" />
+            <column name="FIELD_ID" type="VARCHAR" primary="true" length="32" />
+            <column name="FIELD_VARCHAR" type="VARCHAR" length="32" />
             <column name="FIELD_NVARCHAR" type="NVARCHAR" />
             <column name="FIELD_INTEGER" type="INTEGER" />
             <column name="FIELD_MEDIUMINT" type="MEDIUMINT" />
@@ -44,7 +44,7 @@
             <column name="FIELD_BIGINT" type="BIGINT" />
             <column name="FIELD_REAL" type="REAL" />
             <column name="FIELD_DOUBLE" type="DOUBLE" />
-            <column name="FIELD_CHAR" type="CHAR" />
+            <column name="FIELD_CHAR" type="CHAR" length="32" />
             <column name="FIELD_LONGVARCHAR" type="LONGVARCHAR" />
             <column name="FIELD_CLOB" type="CLOB" />
             <column name="FIELD_TINYTEXT" type="TINYTEXT" />

@@ -72,7 +72,11 @@ public class SQLPackage {
             if (column.isPrimary()) {
                 primaryColumns.add(column.getColumnName());
             }
-            columnDefList.add(column.getColumnName() + " " + column.getColumnType());
+            String lengthStr = "";
+            if (column.getLength() != Integer.MIN_VALUE){
+                lengthStr = "(" + column.getLength() + ")";
+            }
+            columnDefList.add(column.getColumnName() + " " + column.getColumnType() + lengthStr);
         });
         builder.append(StringUtils.join(columnDefList, ","));
         if (!primaryColumns.isEmpty()) {
@@ -104,10 +108,14 @@ public class SQLPackage {
         if (column == null) {
             return null;
         }
+        String lengthStr = "";
+        if (column.getLength() != Integer.MIN_VALUE){
+            lengthStr = "(" + column.getLength() + ")";
+        }
         return "ALTER TABLE " + tableName + " ADD COLUMN " +
                 columnName +
                 " " +
-                column.getColumnType();
+                column.getColumnType() + lengthStr;
     }
 
     public String getIndexDefineSQL(String tableName, String indexName) {

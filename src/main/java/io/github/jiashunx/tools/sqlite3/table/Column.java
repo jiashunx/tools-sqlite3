@@ -13,6 +13,7 @@ public class Column {
     private boolean primary;
     private String tableDesc;
     private String columnComment;
+    private int length;
 
     public Column() {}
 
@@ -62,5 +63,13 @@ public class Column {
 
     public void setColumnComment(String columnComment) {
         this.columnComment = columnComment;
+    }
+
+    public int getLength() {
+        return length;
+    }
+
+    public void setLength(int length) {
+        this.length = length;
     }
 }

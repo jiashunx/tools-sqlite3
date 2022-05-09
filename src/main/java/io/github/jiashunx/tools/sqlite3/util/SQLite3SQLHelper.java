@@ -90,6 +90,11 @@ public class SQLite3SQLHelper {
                                     column.setColumnType(columnElement.attributeValue("type"));
                                     column.setPrimary("true".equals(columnElement.attributeValue("primary")));
                                     column.setColumnComment(columnElement.attributeValue("comment"));
+                                    String length = columnElement.attributeValue("length");
+                                    column.setLength(Integer.MIN_VALUE);
+                                    if (length != null && !"".equals(length.trim())) {
+                                        column.setLength(Integer.parseInt(length.trim()));
+                                    }
                                     column.setTableName(tableName);
                                     column.setTableDesc(tableDesc);
                                     sqlPackageRef.get().addColumnDDL(column);
