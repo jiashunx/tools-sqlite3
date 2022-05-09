@@ -329,6 +329,28 @@ public class SQLite3JdbcTemplate {
         }) == 1;
     }
 
+    public boolean isTriggerExists(String triggerName) throws SQLite3SQLException {
+        return queryForInt("SELECT COUNT(1) FROM sqlite_master M WHERE M.type='trigger' AND M.name=?", statement -> {
+            statement.setString(1, triggerName);
+        }) == 1;
+    }
+
+    public int dropTable(String tableName) throws SQLite3SQLException {
+        return executeUpdate("DROP TABLE " + tableName);
+    }
+
+    public int dropTableColumn(String tableName, String columnName) throws SQLite3SQLException {
+        return executeUpdate("ALTER TABLE " + tableName + " DROP COLUMN " + columnName);
+    }
+
+    public int dropIndex(String indexName) throws SQLite3SQLException {
+        return executeUpdate("DROP INDEX " + indexName);
+    }
+
+    public int dropTrigger(String triggerName) throws SQLite3SQLException {
+        return executeUpdate("DROP TRIGGER " + triggerName);
+    }
+
     public String getTableDefineSQL(String tableName) throws SQLite3SQLException {
         if (isTableExists(tableName)) {
             return queryForString("SELECT M.sql FROM sqlite_master M WHERE M.type='table' AND M.name=?", statement -> {
