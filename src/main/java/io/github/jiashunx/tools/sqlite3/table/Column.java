@@ -7,31 +7,60 @@ import java.util.Objects;
  */
 public class Column {
 
-    private final String tableName;
-    private final String columnName;
-    private final String columnType;
-    private final boolean primary;
+    private String tableName;
+    private String columnName;
+    private String columnType;
+    private boolean primary;
+    private String tableDesc;
+    private String columnComment;
 
-    public Column(String tableName, String columnName, String columnType, boolean primary) {
-        this.tableName = Objects.requireNonNull(tableName);
-        this.columnName = Objects.requireNonNull(columnName);
-        this.columnType = Objects.requireNonNull(columnType);
-        this.primary = primary;
-    }
+    public Column() {}
 
     public String getTableName() {
         return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = Objects.requireNonNull(tableName);
     }
 
     public String getColumnName() {
         return columnName;
     }
 
+    public void setColumnName(String columnName) {
+        this.columnName = Objects.requireNonNull(columnName);
+    }
+
     public String getColumnType() {
         return columnType;
     }
 
+    public void setColumnType(String columnType) {
+        this.columnType = Objects.requireNonNull(columnType);
+    }
+
     public boolean isPrimary() {
         return primary;
+    }
+
+    public void setPrimary(boolean primary) {
+        this.primary = primary;
+    }
+
+    public String getTableDesc() {
+        return tableDesc;
+    }
+
+    public void setTableDesc(String tableDesc) {
+        this.tableDesc = tableDesc;
+    }
+
+    public String getColumnComment() {
+        return columnComment;
+    }
+
+    public void setColumnComment(String columnComment) {
+        this.columnComment = columnComment;
     }
 }

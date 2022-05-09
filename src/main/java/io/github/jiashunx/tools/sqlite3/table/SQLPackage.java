@@ -12,7 +12,11 @@ public class SQLPackage {
     /**
      * groupId.
      */
-    private final String groupId;
+    private String groupId;
+    /**
+     * groupName.
+     */
+    private String groupName;
     /**
      * key - sqlid
      */
@@ -42,9 +46,7 @@ public class SQLPackage {
      */
     private final Map<String, View> viewDDL = new ConcurrentHashMap<>();
 
-    public SQLPackage(String groupId) {
-        this.groupId = Objects.requireNonNull(groupId);
-    }
+    public SQLPackage() {}
 
     public List<String> getTableNames() {
         return new ArrayList<>(columnDDL.keySet());
@@ -153,10 +155,6 @@ public class SQLPackage {
         return viewDDL.get(viewName);
     }
 
-    public String getGroupId() {
-        return groupId;
-    }
-
     public synchronized void addDQL(SQL sql) {
         dql.put(sql.getId(), sql);
     }
@@ -179,4 +177,19 @@ public class SQLPackage {
         viewDDL.put(view.getViewName(), view);
     }
 
+    public String getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(String groupId) {
+        this.groupId = Objects.requireNonNull(groupId);
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
 }

@@ -8,31 +8,42 @@ import java.util.Objects;
  */
 public class Index {
 
-    private final String tableName;
-    private final String indexName;
-    private final boolean unique;
-    private final List<String> columnNames;
+    private String tableName;
+    private String indexName;
+    private boolean unique;
+    private List<String> columnNames;
 
-    public Index(String tableName, String indexName, boolean unique, List<String> columnNames) {
-        this.tableName = Objects.requireNonNull(tableName);
-        this.indexName = Objects.requireNonNull(indexName);
-        this.unique = unique;
-        this.columnNames = Objects.requireNonNull(columnNames);
-    }
+    public Index() {}
 
     public String getTableName() {
         return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = Objects.requireNonNull(tableName);
     }
 
     public String getIndexName() {
         return indexName;
     }
 
+    public void setIndexName(String indexName) {
+        this.indexName = Objects.requireNonNull(indexName);
+    }
+
     public boolean isUnique() {
         return unique;
     }
 
+    public void setUnique(boolean unique) {
+        this.unique = unique;
+    }
+
     public List<String> getColumnNames() {
         return columnNames;
+    }
+
+    public void setColumnNames(List<String> columnNames) {
+        this.columnNames = Objects.requireNonNull(columnNames);
     }
 }

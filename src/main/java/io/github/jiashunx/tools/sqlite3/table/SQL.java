@@ -7,39 +7,42 @@ import java.util.Objects;
  */
 public class SQL {
 
-    private final String id;
-    private final String content;
-    private final String desc;
-    private final String className;
+    private String id;
+    private String content;
+    private String desc;
+    private String className;
 
-    public SQL(String id, String content) {
-        this(id, content, null);
-    }
-
-    public SQL(String id, String content, String desc) {
-        this(id, content, desc, null);
-    }
-
-    public SQL(String id, String content, String desc, String className) {
-        this.id = Objects.requireNonNull(id);
-        this.content = Objects.requireNonNull(content);
-        this.desc = desc;
-        this.className = className;
-    }
+    public SQL() {}
 
     public String getId() {
         return id;
     }
 
-    public String getDesc() {
-        return desc;
+    public void setId(String id) {
+        this.id = Objects.requireNonNull(id);
     }
 
     public String getContent() {
         return content;
     }
 
+    public void setContent(String content) {
+        this.content = Objects.requireNonNull(content);
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
+    }
+
     public String getClassName() {
         return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
     }
 }

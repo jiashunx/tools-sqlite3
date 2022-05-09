@@ -46,18 +46,20 @@ public class SQLite3SQLHelper {
         SQLPackage sqlPackage = null;
         try {
             Element rootElement = new SAXReader().read(inputStream).getRootElement();
-            String groupId = rootElement.attributeValue("id");
-            sqlPackage = new SQLPackage(groupId);
+            sqlPackage = new SQLPackage();
+            sqlPackage.setGroupId(rootElement.attributeValue("id"));
+            sqlPackage.setGroupName(rootElement.attributeValue("name"));
             AtomicReference<SQLPackage> sqlPackageRef = new AtomicReference<>(sqlPackage);
             Optional.ofNullable(rootElement.elements("dql")).ifPresent(dqlElements -> {
                 dqlElements.forEach(dqlElement -> {
                     Optional.ofNullable(dqlElement.elements("sql")).ifPresent(sqlElements -> {
                         sqlElements.forEach(sqlElement -> {
-                            String id = sqlElement.attributeValue("id");
-                            String desc = sqlElement.attributeValue("attr");
-                            String className = sqlElement.attributeValue("class");
-                            String content = sqlElement.getText().replace("    ", "").replace("\n", " ");
-                            sqlPackageRef.get().addDQL(new SQL(id, content, desc, className));
+                            SQL sql = new SQL();
+                            sql.setId(sqlElement.attributeValue("id"));
+                            sql.setDesc(sqlElement.attributeValue("desc"));
+                            sql.setClassName(sqlElement.attributeValue("class"));
+                            sql.setContent(sqlElement.getText().replace("    ", "").replace("\n", " "));
+                            sqlPackageRef.get().addDQL(sql);
                         });
                     });
                 });
@@ -66,10 +68,11 @@ public class SQLite3SQLHelper {
                 dmlElements.forEach(dmlElement -> {
                     Optional.ofNullable(dmlElement.elements("sql")).ifPresent(sqlElements -> {
                         sqlElements.forEach(sqlElement -> {
-                            String id = sqlElement.attributeValue("id");
-                            String desc = sqlElement.attributeValue("attr");
-                            String content = sqlElement.getText().replace("    ", "").replace("\n", " ");
-                            sqlPackageRef.get().addDML(new SQL(id, content, desc));
+                            SQL sql = new SQL();
+                            sql.setId(sqlElement.attributeValue("id"));
+                            sql.setDesc(sqlElement.attributeValue("desc"));
+                            sql.setContent(sqlElement.getText().replace("    ", "").replace("\n", " "));
+                            sqlPackageRef.get().addDML(sql);
                         });
                     });
                 });
@@ -79,40 +82,40 @@ public class SQLite3SQLHelper {
                     Optional.ofNullable(ddlElement.elements("table")).ifPresent(tableElements -> {
                         tableElements.forEach(tableElement -> {
                             String tableName = tableElement.attributeValue("name");
+                            String tableDesc = tableElement.attributeValue("desc");
                             Optional.ofNullable(tableElement.elements("column")).ifPresent(columnElements -> {
                                 columnElements.forEach(columnElement -> {
-                                    String columnName = columnElement.attributeValue("name");
-                                    String columnType = columnElement.attributeValue("type");
-                                    String primaryVal = columnElement.attributeValue("primary");
-                                    boolean primary = "true".equals(primaryVal);
-                                    sqlPackageRef.get().addColumnDDL(new Column(tableName, columnName, columnType, primary));
+                                    Column column =  new Column();
+                                    column.setColumnName(columnElement.attributeValue("name"));
+                                    column.setColumnType(columnElement.attributeValue("type"));
+                                    column.setPrimary("true".equals(columnElement.attributeValue("primary")));
+                                    column.setColumnComment(columnElement.attributeValue("comment"));
+                                    column.setTableName(tableName);
+                                    column.setTableDesc(tableDesc);
+                                    sqlPackageRef.get().addColumnDDL(column);
                                 });
                             });
                         });
                     });
                     Optional.ofNullable(ddlElement.elements("view")).ifPresent(viewElements -> {
                         viewElements.forEach(viewElement -> {
-                            String viewName = viewElement.attributeValue("name");
-                            String temporaryVal = viewElement.attributeValue("temporary");
-                            boolean temporary = "true".equals(temporaryVal);
-                            String content = viewElement.getText().replace("    ", "").replace("\n", " ");
-                            sqlPackageRef.get().addViewDDL(new View(viewName, temporary, content));
+                            View view = new View();
+                            view.setViewName(viewElement.attributeValue("name"));
+                            view.setViewDesc(viewElement.attributeValue("desc"));
+                            view.setTemporary("true".equals(viewElement.attributeValue("temporary")));
+                            view.setContent(viewElement.getText().replace("    ", "").replace("\n", " "));
+                            sqlPackageRef.get().addViewDDL(view);
                         });
                     });
                     Optional.ofNullable(ddlElement.elements("index")).ifPresent(indexElements -> {
                         indexElements.forEach(indexElement -> {
-                            String indexName = indexElement.attributeValue("name");
-                            String tableName = indexElement.attributeValue("table");
-                            String uniqueVal = indexElement.attributeValue("unique");
-                            boolean unique = "true".equals(uniqueVal);
-                            AtomicReference<List<String>> columnNamesRef = new AtomicReference(new ArrayList<>());
-                            Optional.ofNullable(indexElement.elements("column")).ifPresent(columnElements -> {
-                                columnElements.forEach(columnElement -> {
-                                    String columnName = columnElement.attributeValue("name");
-                                    columnNamesRef.get().add(columnName);
-                                });
-                            });
-                            sqlPackageRef.get().addIndexDDL(new Index(tableName, indexName, unique, columnNamesRef.get()));
+                            Index index = new Index();
+                            index.setIndexName(indexElement.attributeValue("name"));
+                            index.setTableName(indexElement.attributeValue("table"));
+                            index.setUnique("true".equals(indexElement.attributeValue("unique")));
+                            AtomicReference<List<String>> columnNamesRef = new AtomicReference<List<String>>(new ArrayList<>());
+                            index.setColumnNames(columnNamesRef.get());
+                            sqlPackageRef.get().addIndexDDL(index);
                         });
                     });
                 });
