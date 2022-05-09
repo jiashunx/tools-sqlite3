@@ -23,14 +23,39 @@
             <column name="FIELD_VARCHAR" type="VARCHAR" />
             <column name="FIELD_NVARCHAR" type="NVARCHAR" />
             <column name="FIELD_INTEGER" type="INTEGER" />
+            <column name="FIELD_MEDIUMINT" type="MEDIUMINT" />
+            <column name="FIELD_INT" type="INT" />
+            <column name="FIELD_INT4" type="INT4" />
             <column name="FIELD_TEXT" type="TEXT" />
             <column name="FIELD_FLOAT" type="FLOAT" />
             <column name="FIELD_BLOB" type="BLOB" />
             <column name="FIELD_BOOLEAN" type="BOOLEAN" />
+            <column name="FIELD_BIT" type="BIT" />
             <column name="FIELD_NUMERIC" type="NUMERIC" />
+            <column name="FIELD_DECIMAL" type="DECIMAL" />
             <column name="FIELD_DATE" type="DATE" />
             <column name="FIELD_TIME" type="TIME" />
             <column name="FIELD_TIMESTAMP" type="TIMESTAMP" />
+            <column name="FIELD_INT1" type="INT1" />
+            <column name="FIELD_TINYINT" type="TINYINT" />
+            <column name="FIELD_INT2" type="INT2" />
+            <column name="FIELD_SMALLINT" type="SMALLINT" />
+            <column name="FIELD_INT8" type="INT8" />
+            <column name="FIELD_BIGINT" type="BIGINT" />
+            <column name="FIELD_REAL" type="REAL" />
+            <column name="FIELD_DOUBLE" type="DOUBLE" />
+            <column name="FIELD_CHAR" type="CHAR" />
+            <column name="FIELD_LONGVARCHAR" type="LONGVARCHAR" />
+            <column name="FIELD_CLOB" type="CLOB" />
+            <column name="FIELD_TINYTEXT" type="TINYTEXT" />
+            <column name="FIELD_MEDIUMTEXT" type="MEDIUMTEXT" />
+            <column name="FIELD_LONGTEXT" type="LONGTEXT" />
+            <column name="FIELD_NCHAR" type="NCHAR" />
+            <column name="FIELD_LONGNVARCHAR" type="LONGNVARCHAR" />
+            <column name="FIELD_NCLOB" type="NCLOB" />
+            <column name="FIELD_BINARY" type="BINARY" />
+            <column name="FIELD_VARBINARY" type="VARBINARY" />
+            <column name="FIELD_LONGVARBINARY" type="LONGVARBINARY" />
         </table>
         <view name="MAPPING_TEST_ENTITY_VIEW" temporary="false">
             <!-- create view as select * from table where condition. -->
