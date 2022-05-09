@@ -18,13 +18,13 @@
     </dml>
     <!-- 数据定义SQL -->
     <ddl>
-        <table name="MAPPING_TEST_ENTITY">
+        <table name="MAPPING_TEST_ENTITY" desc="">
             <column name="FIELD_ID" type="VARCHAR" primary="true" length="32" />
             <column name="FIELD_VARCHAR" type="VARCHAR" length="32" not-null="true" />
             <column name="FIELD_NVARCHAR" type="NVARCHAR" default="jjj" />
             <column name="FIELD_INTEGER" type="INTEGER" />
             <column name="FIELD_MEDIUMINT" type="MEDIUMINT" />
-            <column name="FIELD_INT" type="INT" />
+            <column name="FIELD_INT" type="INT" comment="呵呵呵" />
             <column name="FIELD_INT4" type="INT4" />
             <column name="FIELD_TEXT" type="TEXT" />
             <column name="FIELD_FLOAT" type="FLOAT" />
@@ -68,5 +68,25 @@
             <column name="FIELD_VARCHAR" />
             <column name="FIELD_INTEGER" />
         </index>
+        <table name="COMPANY" desc="">
+            <column name="ID" type="INT" primary="true" not-null="true" />
+            <column name="NAME" type="TEXT" not-null="true" />
+            <column name="AGE" type="INT" not-null="true" />
+            <column name="ADDRESS" type="CHAR" length="50" />
+            <column name="SALARY" type="REAL" />
+        </table>
+        <table name="AUDIT" desc="COMPANY表的审计日志（使用触发器写入）">
+            <column name="EMP_ID" type="INT" not-null="true" primary="true" />
+            <column name="ENTRY_DATE" type="TEXT" not-null="true" />
+        </table>
+        <trigger name="AUDIT_LOG" desc="">
+            <![CDATA[
+                CREATE TRIGGER AUDIT_LOG AFTER INSERT
+                ON COMPANY
+                BEGIN
+                   INSERT INTO AUDIT(EMP_ID, ENTRY_DATE) VALUES (new.ID, datetime('now'));
+                END;
+            ]]>
+        </trigger>
     </ddl>
 </table-metadata>

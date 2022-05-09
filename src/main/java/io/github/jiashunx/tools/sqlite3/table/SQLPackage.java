@@ -45,6 +45,10 @@ public class SQLPackage {
      * key - viewName
      */
     private final Map<String, View> viewDDL = new ConcurrentHashMap<>();
+    /**
+     * key - triggerName
+     */
+    private final Map<String, Trigger> triggerDDL = new ConcurrentHashMap<>();
 
     public SQLPackage() {}
 
@@ -58,6 +62,10 @@ public class SQLPackage {
 
     public List<String> getViewNames() {
         return new ArrayList<>(viewDDL.keySet());
+    }
+
+    public List<String> getTriggerNames() {
+        return new ArrayList<>(triggerDDL.keySet());
     }
 
     public String getTableDefineSQL(String tableName) {
@@ -151,6 +159,14 @@ public class SQLPackage {
         return builder.toString();
     }
 
+    public String getTriggerDefineSQL(String triggerName) {
+        Trigger trigger = getTrigger(triggerName);
+        if (trigger == null) {
+            return null;
+        }
+        return trigger.getTriggerSQL();
+    }
+
     public SQL getDQL(String sqlId) {
         return dql.get(sqlId);
     }
@@ -179,6 +195,10 @@ public class SQLPackage {
         return viewDDL.get(viewName);
     }
 
+    public Trigger getTrigger(String triggerName) {
+        return triggerDDL.get(triggerName);
+    }
+
     public synchronized void addDQL(SQL sql) {
         dql.put(sql.getId(), sql);
     }
@@ -199,6 +219,10 @@ public class SQLPackage {
 
     public synchronized void addViewDDL(View view) {
         viewDDL.put(view.getViewName(), view);
+    }
+
+    public synchronized void addTriggerDDL(Trigger trigger) {
+        triggerDDL.put(trigger.getTriggerName(), trigger);
     }
 
     public String getGroupId() {

@@ -21,6 +21,19 @@ import java.util.Date;
 public class SQLite3MappingTest {
 
     @Test
+    public void testTrigger() throws Throwable {
+        SQLPackage sqlPackage = SQLite3SQLHelper.loadSQLPackageFromClasspath("mapping-test.xml");
+        SQLite3JdbcTemplate jdbcTemplate = new SQLite3JdbcTemplate("test/mapping-test.db");
+        jdbcTemplate.initSQLPackage(sqlPackage);
+        // sqlite没有truncate命令, 使用delete删除表记录
+        jdbcTemplate.executeUpdate("DELETE FROM AUDIT");
+        jdbcTemplate.executeUpdate("DELETE FROM COMPANY");
+        jdbcTemplate.executeUpdate("INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY) " +
+                "VALUES (1, 'Paul', 32, 'California', 20000.00 )");
+        assertEquals(1, jdbcTemplate.queryForInt("SELECT COUNT(1) FROM AUDIT"));
+    }
+
+    @Test
     public void test() throws Throwable {
         SQLPackage sqlPackage = SQLite3SQLHelper.loadSQLPackageFromClasspath("mapping-test.xml");
         assertNotNull(sqlPackage);

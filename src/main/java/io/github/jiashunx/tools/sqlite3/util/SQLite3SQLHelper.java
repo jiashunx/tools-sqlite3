@@ -135,6 +135,15 @@ public class SQLite3SQLHelper {
                             sqlPackageRef.get().addIndexDDL(index);
                         });
                     });
+                    Optional.ofNullable(ddlElement.elements("trigger")).ifPresent(triggerElements -> {
+                        triggerElements.forEach(triggerElement -> {
+                            Trigger trigger = new Trigger();
+                            trigger.setTriggerName(triggerElement.attributeValue("name"));
+                            trigger.setTriggerSQL(triggerElement.getText().replace("    ", " ").replace("\n", " "));
+                            trigger.setDescription(triggerElement.attributeValue("desc"));
+                            sqlPackageRef.get().addTriggerDDL(trigger);
+                        });
+                    });
                 });
             });
         } catch (Throwable throwable) {

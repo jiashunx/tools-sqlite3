@@ -606,6 +606,15 @@ public class SQLite3JdbcTemplate {
                     }
                 });
             });
+            sqlPackage.getTriggerNames().forEach(triggerName -> {
+                if (!isTriggerExists(triggerName)) {
+                    String triggerDefineSQL = sqlPackage.getTriggerDefineSQL(triggerName);
+                    if (logger.isWarnEnabled()) {
+                        logger.warn("trigger[{}] not exists, prepare create it, sql: {}", triggerName, triggerDefineSQL);
+                    }
+                    executeUpdate(triggerDefineSQL);
+                }
+            });
         } catch (Throwable throwable) {
             throw new SQLite3SQLException(String.format("init sql package failed, groupId: %s", sqlPackage.getGroupId()), throwable);
         }
