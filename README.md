@@ -7,6 +7,9 @@
    - 简易的sqlite连接管理，封装JdbcTemplate，利于sql操作
    - 简易的模型与数据表映射处理（插入、查询）
 
+- 支持版本：
+   - JDK11+
+
 - 主要API：
 
    - 添加maven依赖：
@@ -44,5 +47,7 @@
       - feature: 增加对sqlite数据表字段长度的解析处理
       - refactor: 优化对sqlite查询结果的映射处理
       - refactor: 补充优化单元测试用例: [SQLite3MappingTest.java](src/test/java/io/github/jiashunx/tools/sqlite3/SQLite3Test.java)
+   - version 1.2.0-SNAPSHOT
+      - feature：编译构建环境由JDK8升级至JDK11
 
 [1]: src/main/java/io/github/jiashunx/tools/sqlite3/SQLite3JdbcTemplate.java
