@@ -47,7 +47,7 @@
       - feature: 增加对sqlite数据表字段长度的解析处理
       - refactor: 优化对sqlite查询结果的映射处理
       - refactor: 补充优化单元测试用例: [SQLite3MappingTest.java](src/test/java/io/github/jiashunx/tools/sqlite3/SQLite3Test.java)
-   - version 1.2.0-SNAPSHOT
+   - version 2.0.0 (released)
       - feature：编译构建环境由JDK8升级至JDK11
 
 [1]: src/main/java/io/github/jiashunx/tools/sqlite3/SQLite3JdbcTemplate.java
